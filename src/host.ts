@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
+
 export interface ToolResult {
   result: unknown;
   view: HTMLIFrameElement | null;
@@ -15,7 +16,12 @@ export interface Host {
   connect(): Promise<HostConnection>;
 }
 
-export function createHost(config: { uri: string }): Host {
+export interface HostConfig {
+  uri: string;
+  sandboxUrl?: string;
+}
+
+export function createHost(config: HostConfig): Host {
   return {
     async connect(): Promise<HostConnection> {
       const client = new Client({
@@ -26,11 +32,21 @@ export function createHost(config: { uri: string }): Host {
 
       await client.connect(transport);
 
+      const [toolsList, resourcesList] = await Promise.all([
+        client.listTools(),
+        client.listResources(),
+      ]);
+
+      const tools = new Map(toolsList.tools.map((tool) => [tool.name, tool]));
+      const resources = new Map(
+        resourcesList.resources.map((resource) => [resource.uri, resource])
+      );
+
       return {
         async executeTool(name, args) {
           const result = await client.callTool({ name, arguments: args });
 
-          // TODO: check result._meta?.ui?.resourceUri, read resource, mount iframe
+          // TODO: use tools/resources maps to fetch UI resource and mount iframe
 
           return { result, view: null };
         },
