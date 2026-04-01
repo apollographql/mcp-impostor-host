@@ -8,12 +8,16 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./sandbox-server": {
+      "default": "./dist/sandbox-server.js"
     }
   },
   "scripts": {
     "build": "tsc"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "typescript": "^6.0.2"
   },
   "dependencies": {
