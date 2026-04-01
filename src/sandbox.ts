@@ -47,6 +47,8 @@ const RESOURCE_READY: McpUiSandboxResourceReadyNotification["method"] =
 const PROXY_READY: McpUiSandboxProxyReadyNotification["method"] =
   "ui/notifications/sandbox-proxy-ready";
 
+const SANDBOX_METHOD_PREFIX = "ui/notifications/sandbox-";
+
 window.addEventListener("message", (event) => {
   if (event.source === window.parent) {
     if (event.origin !== EXPECTED_HOST_ORIGIN) {
@@ -57,28 +59,32 @@ window.addEventListener("message", (event) => {
       return;
     }
 
-    if (event.data?.method === RESOURCE_READY) {
-      const { html, sandbox, permissions } = event.data.params;
+    // Per spec: sandbox MUST NOT forward methods starting with "ui/notifications/sandbox-"
+    if (event.data?.method?.startsWith(SANDBOX_METHOD_PREFIX)) {
+      if (event.data.method === RESOURCE_READY) {
+        const { html, sandbox, permissions } = event.data.params;
 
-      if (typeof sandbox === "string") {
-        inner.setAttribute("sandbox", sandbox);
-      }
+        if (typeof sandbox === "string") {
+          inner.setAttribute("sandbox", sandbox);
+        }
 
-      const allow = buildAllowAttribute(permissions);
-      if (allow) {
-        inner.setAttribute("allow", allow);
-      }
+        const allow = buildAllowAttribute(permissions);
+        if (allow) {
+          inner.setAttribute("allow", allow);
+        }
 
-      if (typeof html === "string") {
-        const doc = inner.contentDocument ?? inner.contentWindow?.document;
-        if (doc) {
-          doc.open();
-          doc.write(html);
-          doc.close();
-        } else {
-          inner.srcdoc = html;
+        if (typeof html === "string") {
+          const doc = inner.contentDocument ?? inner.contentWindow?.document;
+          if (doc) {
+            doc.open();
+            doc.write(html);
+            doc.close();
+          } else {
+            inner.srcdoc = html;
+          }
         }
       }
+      // All other sandbox-prefixed methods are silently ignored
     } else {
       inner.contentWindow?.postMessage(event.data, "*");
     }

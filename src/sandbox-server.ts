@@ -11,8 +11,24 @@ function buildSandboxHtml(): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>${script}</script></body></html>`;
 }
 
+// Applied when ui.csp is omitted entirely, per spec §"Restrictive Default"
+const DEFAULT_CSP =
+  "default-src 'none'; " +
+  "script-src 'self' 'unsafe-inline'; " +
+  "style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self' data:; " +
+  "media-src 'self' data:; " +
+  "connect-src 'none'; " +
+  "object-src 'none'; " +
+  "frame-src 'none'; " +
+  "child-src 'none'; " +
+  "base-uri 'self'";
+
 function buildCspHeader(csp: McpUiResourceCsp): string {
-  const directives = ["default-src 'none'"];
+  const directives = [
+    "default-src 'none'",
+    "object-src 'none'", // always block dangerous features
+  ];
 
   if (csp.connectDomains?.length) {
     directives.push(`connect-src ${csp.connectDomains.join(" ")}`);
@@ -29,14 +45,20 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
     );
   }
 
+  // Explicit frame-src 'none' when not declared — base-uri does not inherit
+  // from default-src so both must always be emitted
   if (csp.frameDomains?.length) {
     const domains = csp.frameDomains.join(" ");
     directives.push(`frame-src ${domains}`, `child-src ${domains}`);
+  } else {
+    directives.push("frame-src 'none'", "child-src 'none'");
   }
 
-  if (csp.baseUriDomains?.length) {
-    directives.push(`base-uri ${csp.baseUriDomains.join(" ")}`);
-  }
+  directives.push(
+    csp.baseUriDomains?.length
+      ? `base-uri ${csp.baseUriDomains.join(" ")}`
+      : "base-uri 'self'"
+  );
 
   return directives.join("; ");
 }
@@ -49,21 +71,21 @@ const server = createServer((req, res) => {
     const url = new URL(req.url, `http://localhost:${port}`);
     const cspParam = url.searchParams.get("csp");
 
-    const headers: Record<string, string> = {
-      "Content-Type": "text/html",
-      "Cache-Control": "no-store",
-    };
-
+    let cspHeader = DEFAULT_CSP;
     if (cspParam) {
       try {
         const csp = JSON.parse(cspParam) as McpUiResourceCsp;
-        headers["Content-Security-Policy"] = buildCspHeader(csp);
+        cspHeader = buildCspHeader(csp);
       } catch {
-        // ignore malformed CSP param
+        // ignore malformed CSP param, fall back to default
       }
     }
 
-    res.writeHead(200, headers);
+    res.writeHead(200, {
+      "Content-Type": "text/html",
+      "Cache-Control": "no-store",
+      "Content-Security-Policy": cspHeader,
+    });
     res.end(sandboxHtml);
   } else {
     res.writeHead(404);

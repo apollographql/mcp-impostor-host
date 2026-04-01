@@ -9,7 +9,7 @@ import {
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
 
 export interface ToolResult {
   result: CallToolResult;
@@ -18,6 +18,10 @@ export interface ToolResult {
 
 export interface HostConnection {
   executeTool(name: string, args: Record<string, unknown>): Promise<ToolResult>;
+  /** All URLs passed to `ui/open-link` since the connection was established. */
+  readonly openedLinks: readonly string[];
+  /** Optional handler called when the view requests a link to be opened. */
+  onOpenLink: ((url: string) => void) | null;
   [Symbol.asyncDispose](): Promise<void>;
 }
 
@@ -28,9 +32,29 @@ export interface Host {
 export interface HostConfig {
   uri: string;
   sandboxUrl?: string;
+  /**
+   * Container dimensions passed to the view in host context.
+   * Defaults to `{ maxHeight: 6000 }` if not specified.
+   */
+  containerDimensions?: (
+    | { height: number }
+    | { maxHeight?: number }
+  ) & (
+    | { width: number }
+    | { maxWidth?: number }
+  );
 }
 
 const HOST_INFO = { name: "mcp-impostor-host", version: "0.0.1" } as const;
+
+// Extensions field is pending SEP-1724 and not yet in the SDK's ClientCapabilities type
+const CLIENT_CAPABILITIES = {
+  extensions: {
+    "io.modelcontextprotocol/ui": {
+      mimeTypes: [RESOURCE_MIME_TYPE],
+    },
+  },
+} as Parameters<Client["registerCapabilities"]>[0];
 
 function loadSandboxProxy(
   sandboxUrl: string,
@@ -72,12 +96,17 @@ function loadSandboxProxy(
 async function mountApp(
   iframe: HTMLIFrameElement,
   client: Client,
+  tool: Tool,
   html: string,
   csp: McpUiResourceCsp | undefined,
   permissions: McpUiResourcePermissions | undefined,
+  containerDimensions: HostConfig["containerDimensions"],
   args: Record<string, unknown>,
-  callResultPromise: Promise<CallToolResult>
-): Promise<void> {
+  callResultPromise: Promise<CallToolResult>,
+  openedLinks: string[],
+  getOpenLinkHandler: () => ((url: string) => void) | null,
+  onTeardownRequested: () => void
+): Promise<AppBridge> {
   const serverCapabilities = client.getServerCapabilities();
 
   const bridge = new AppBridge(
@@ -87,15 +116,43 @@ async function mountApp(
       openLinks: {},
       serverTools: serverCapabilities?.tools ?? undefined,
       serverResources: serverCapabilities?.resources ?? undefined,
+      sandbox: csp || permissions ? { csp, permissions } : undefined,
     },
     {
       hostContext: {
         theme: "light",
         platform: "web",
         displayMode: "inline",
+        availableDisplayModes: ["inline"],
+        toolInfo: { tool },
+        containerDimensions: containerDimensions ?? { maxHeight: 6000 },
       },
     }
   );
+
+  bridge.onopenlink = async ({ url }) => {
+    openedLinks.push(url);
+    getOpenLinkHandler()?.(url);
+    return {};
+  };
+
+  bridge.onsizechange = ({ width, height }) => {
+    if (width != null) iframe.style.width = `${width}px`;
+    if (height != null) iframe.style.height = `${height}px`;
+  };
+
+  bridge.onrequestdisplaymode = async () => {
+    return { mode: "inline" };
+  };
+
+  bridge.onrequestteardown = async () => {
+    try {
+      await bridge.teardownResource({});
+    } catch {
+      // view may already be gone
+    }
+    onTeardownRequested();
+  };
 
   const initializedPromise = new Promise<void>((resolve) => {
     bridge.oninitialized = () => resolve();
@@ -117,14 +174,17 @@ async function mountApp(
         reason: error instanceof Error ? error.message : String(error),
       })
   );
+
+  return bridge;
 }
 
 export function createHost(config: HostConfig): Host {
   return {
     async connect(): Promise<HostConnection> {
       const client = new Client(HOST_INFO);
-      const transport = new StreamableHTTPClientTransport(new URL(config.uri));
+      client.registerCapabilities(CLIENT_CAPABILITIES);
 
+      const transport = new StreamableHTTPClientTransport(new URL(config.uri));
       await client.connect(transport);
 
       const [toolsList, resourcesList] = await Promise.all([
@@ -137,7 +197,14 @@ export function createHost(config: HostConfig): Host {
         resourcesList.resources.map((resource) => [resource.uri, resource])
       );
 
-      return {
+      let activeBridge: AppBridge | null = null;
+      let activeIframe: HTMLIFrameElement | null = null;
+      const openedLinks: string[] = [];
+
+      const connection: HostConnection = {
+        openedLinks,
+        onOpenLink: null,
+
         async executeTool(name, args) {
           const tool = tools.get(name);
           if (!tool) {
@@ -192,15 +259,25 @@ export function createHost(config: HostConfig): Host {
               uiMeta?.permissions
             );
 
-            await mountApp(
+            activeBridge = await mountApp(
               iframe,
               client,
+              tool,
               html,
               uiMeta?.csp,
               uiMeta?.permissions,
+              config.containerDimensions,
               args,
-              callResultPromise
+              callResultPromise,
+              openedLinks,
+              () => connection.onOpenLink,
+              () => {
+                iframe.remove();
+                activeIframe = null;
+                activeBridge = null;
+              }
             );
+            activeIframe = iframe;
 
             return { result: callResult, view: iframe };
           }
@@ -209,9 +286,23 @@ export function createHost(config: HostConfig): Host {
         },
 
         async [Symbol.asyncDispose]() {
+          if (activeBridge) {
+            try {
+              await activeBridge.teardownResource({});
+            } catch {
+              // view may already be gone
+            }
+            activeBridge = null;
+          }
+          if (activeIframe) {
+            activeIframe.remove();
+            activeIframe = null;
+          }
           await client.close();
         },
       };
+
+      return connection;
     },
   };
 }
