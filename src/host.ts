@@ -1,12 +1,18 @@
 import {
+  AppBridge,
+  PostMessageTransport,
+  buildAllowAttribute,
   getToolUiResourceUri,
   RESOURCE_MIME_TYPE,
+  type McpUiResourceCsp,
+  type McpUiResourcePermissions,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 export interface ToolResult {
-  result: unknown;
+  result: CallToolResult;
   view: HTMLIFrameElement | null;
 }
 
@@ -24,13 +30,99 @@ export interface HostConfig {
   sandboxUrl?: string;
 }
 
+const HOST_INFO = { name: "mcp-impostor-host", version: "0.0.1" } as const;
+
+function loadSandboxProxy(
+  sandboxUrl: string,
+  csp: McpUiResourceCsp | undefined,
+  permissions: McpUiResourcePermissions | undefined
+): Promise<HTMLIFrameElement> {
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "width:100%;height:100%;border:none;";
+  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+
+  const allow = buildAllowAttribute(permissions);
+  if (allow) {
+    iframe.setAttribute("allow", allow);
+  }
+
+  const readyPromise = new Promise<HTMLIFrameElement>((resolve) => {
+    const listener = ({ source, data }: MessageEvent) => {
+      if (
+        source === iframe.contentWindow &&
+        data?.method === "ui/notifications/sandbox-proxy-ready"
+      ) {
+        window.removeEventListener("message", listener);
+        resolve(iframe);
+      }
+    };
+    window.addEventListener("message", listener);
+  });
+
+  const url = new URL(sandboxUrl);
+  if (csp) {
+    url.searchParams.set("csp", JSON.stringify(csp));
+  }
+  iframe.src = url.href;
+  document.body.appendChild(iframe);
+
+  return readyPromise;
+}
+
+async function mountApp(
+  iframe: HTMLIFrameElement,
+  client: Client,
+  html: string,
+  csp: McpUiResourceCsp | undefined,
+  permissions: McpUiResourcePermissions | undefined,
+  args: Record<string, unknown>,
+  callResultPromise: Promise<CallToolResult>
+): Promise<void> {
+  const serverCapabilities = client.getServerCapabilities();
+
+  const bridge = new AppBridge(
+    client,
+    HOST_INFO,
+    {
+      openLinks: {},
+      serverTools: serverCapabilities?.tools ?? undefined,
+      serverResources: serverCapabilities?.resources ?? undefined,
+    },
+    {
+      hostContext: {
+        theme: "light",
+        platform: "web",
+        displayMode: "inline",
+      },
+    }
+  );
+
+  const initializedPromise = new Promise<void>((resolve) => {
+    bridge.oninitialized = () => resolve();
+  });
+
+  await bridge.connect(
+    new PostMessageTransport(iframe.contentWindow!, iframe.contentWindow!)
+  );
+
+  await bridge.sendSandboxResourceReady({ html, csp, permissions });
+  await initializedPromise;
+
+  await bridge.sendToolInput({ arguments: args });
+
+  callResultPromise.then(
+    (result) => bridge.sendToolResult(result),
+    (error) =>
+      bridge.sendToolCancelled({
+        reason: error instanceof Error ? error.message : String(error),
+      })
+  );
+}
+
 export function createHost(config: HostConfig): Host {
   return {
     async connect(): Promise<HostConnection> {
-      const client = new Client({
-        name: "mcp-impostor-host",
-        version: "0.0.1",
-      });
+      const client = new Client(HOST_INFO);
       const transport = new StreamableHTTPClientTransport(new URL(config.uri));
 
       await client.connect(transport);
@@ -54,8 +146,13 @@ export function createHost(config: HostConfig): Host {
 
           const uiResourceUri = getToolUiResourceUri(tool);
 
+          const callResultPromise = client.callTool({
+            name,
+            arguments: args,
+          }) as Promise<CallToolResult>;
+
           const [callResult, uiResource] = await Promise.all([
-            client.callTool({ name, arguments: args }),
+            callResultPromise,
             uiResourceUri
               ? client.readResource({ uri: uiResourceUri })
               : Promise.resolve(null),
@@ -84,12 +181,28 @@ export function createHost(config: HostConfig): Host {
 
             const html = "blob" in content ? atob(content.blob) : content.text;
 
-            // Look up listing-level metadata as fallback for CSP/permissions
-            const listingResource = resources.get(uiResourceUri!);
+            // Content-level metadata takes precedence over listing-level
+            const contentMeta = (content as { _meta?: { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } } })._meta;
+            const listingMeta = (resources.get(uiResourceUri!) as { _meta?: { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } } } | undefined)?._meta;
+            const uiMeta = contentMeta?.ui ?? listingMeta?.ui;
 
-            // TODO: mount iframe using html, listingResource, config.sandboxUrl (Phase 3)
-            void html;
-            void listingResource;
+            const iframe = await loadSandboxProxy(
+              config.sandboxUrl,
+              uiMeta?.csp,
+              uiMeta?.permissions
+            );
+
+            await mountApp(
+              iframe,
+              client,
+              html,
+              uiMeta?.csp,
+              uiMeta?.permissions,
+              args,
+              callResultPromise
+            );
+
+            return { result: callResult, view: iframe };
           }
 
           return { result: callResult, view: null };
