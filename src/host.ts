@@ -1,6 +1,9 @@
+import {
+  getToolUiResourceUri,
+  RESOURCE_MIME_TYPE,
+} from "@modelcontextprotocol/ext-apps/app-bridge";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-
 
 export interface ToolResult {
   result: unknown;
@@ -44,11 +47,32 @@ export function createHost(config: HostConfig): Host {
 
       return {
         async executeTool(name, args) {
-          const result = await client.callTool({ name, arguments: args });
+          const tool = tools.get(name);
+          if (!tool) {
+            throw new Error(`Unknown tool: "${name}"`);
+          }
 
-          // TODO: use tools/resources maps to fetch UI resource and mount iframe
+          const uiResourceUri = getToolUiResourceUri(tool);
 
-          return { result, view: null };
+          const [callResult, uiResource] = await Promise.all([
+            client.callTool({ name, arguments: args }),
+            uiResourceUri
+              ? client.readResource({ uri: uiResourceUri })
+              : Promise.resolve(null),
+          ]);
+
+          if (uiResource) {
+            const content = uiResource.contents[0];
+            if (content?.mimeType !== RESOURCE_MIME_TYPE) {
+              throw new Error(
+                `Unexpected MIME type for UI resource: "${content?.mimeType}"`
+              );
+            }
+            // TODO: extract HTML, mount iframe (Phase 3)
+            void resources;
+          }
+
+          return { result: callResult, view: null };
         },
 
         async [Symbol.asyncDispose]() {
