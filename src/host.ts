@@ -62,14 +62,34 @@ export function createHost(config: HostConfig): Host {
           ]);
 
           if (uiResource) {
-            const content = uiResource.contents[0];
-            if (content?.mimeType !== RESOURCE_MIME_TYPE) {
+            if (!config.sandboxUrl) {
               throw new Error(
-                `Unexpected MIME type for UI resource: "${content?.mimeType}"`
+                `Tool "${name}" returned a UI resource but no sandboxUrl was configured. ` +
+                  `Pass sandboxUrl to createHost() to enable iframe mounting.`
               );
             }
-            // TODO: extract HTML, mount iframe (Phase 3)
-            void resources;
+
+            if (uiResource.contents.length !== 1) {
+              throw new Error(
+                `Expected exactly 1 content item in UI resource, got ${uiResource.contents.length}`
+              );
+            }
+
+            const content = uiResource.contents[0]!;
+            if (content.mimeType !== RESOURCE_MIME_TYPE) {
+              throw new Error(
+                `Unexpected MIME type for UI resource: "${content.mimeType}"`
+              );
+            }
+
+            const html = "blob" in content ? atob(content.blob) : content.text;
+
+            // Look up listing-level metadata as fallback for CSP/permissions
+            const listingResource = resources.get(uiResourceUri!);
+
+            // TODO: mount iframe using html, listingResource, config.sandboxUrl (Phase 3)
+            void html;
+            void listingResource;
           }
 
           return { result: callResult, view: null };
