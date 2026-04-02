@@ -21,7 +21,8 @@
     }
   },
   "scripts": {
-    "build": "tsc && node esbuild.config.js"
+    "build": "tsc && node esbuild.config.js",
+    "test": "playwright test"
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40.0"
