@@ -36,13 +36,8 @@ export interface HostConfig {
    * Container dimensions passed to the view in host context.
    * Defaults to `{ maxHeight: 6000 }` if not specified.
    */
-  containerDimensions?: (
-    | { height: number }
-    | { maxHeight?: number }
-  ) & (
-    | { width: number }
-    | { maxWidth?: number }
-  );
+  containerDimensions?: ({ height: number } | { maxHeight?: number }) &
+    ({ width: number } | { maxWidth?: number });
 }
 
 const HOST_INFO = { name: "mcp-impostor-host", version: "0.0.1" } as const;
@@ -220,9 +215,9 @@ export function createHost(config: HostConfig): Host {
 
           const [callResult, uiResource] = await Promise.all([
             callResultPromise,
-            uiResourceUri
-              ? client.readResource({ uri: uiResourceUri })
-              : Promise.resolve(null),
+            uiResourceUri ?
+              client.readResource({ uri: uiResourceUri })
+            : Promise.resolve(null),
           ]);
 
           if (uiResource) {
@@ -249,8 +244,28 @@ export function createHost(config: HostConfig): Host {
             const html = "blob" in content ? atob(content.blob) : content.text;
 
             // Content-level metadata takes precedence over listing-level
-            const contentMeta = (content as { _meta?: { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } } })._meta;
-            const listingMeta = (resources.get(uiResourceUri!) as { _meta?: { ui?: { csp?: McpUiResourceCsp; permissions?: McpUiResourcePermissions } } } | undefined)?._meta;
+            const contentMeta = (
+              content as {
+                _meta?: {
+                  ui?: {
+                    csp?: McpUiResourceCsp;
+                    permissions?: McpUiResourcePermissions;
+                  };
+                };
+              }
+            )._meta;
+            const listingMeta = (
+              resources.get(uiResourceUri!) as
+                | {
+                    _meta?: {
+                      ui?: {
+                        csp?: McpUiResourceCsp;
+                        permissions?: McpUiResourcePermissions;
+                      };
+                    };
+                  }
+                | undefined
+            )?._meta;
             const uiMeta = contentMeta?.ui ?? listingMeta?.ui;
 
             const iframe = await loadSandboxProxy(

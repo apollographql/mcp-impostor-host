@@ -6,10 +6,20 @@ import type {
   SerializableToolResult,
 } from "../browser/types.js";
 
-export type { SerializableToolResult, CallToolResult } from "../browser/types.js";
+export type {
+  SerializableToolResult,
+  CallToolResult,
+} from "../browser/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const BUNDLE_PATH = resolve(__dirname, "..", "..", "dist", "browser", "host.bundle.js");
+const BUNDLE_PATH = resolve(
+  __dirname,
+  "..",
+  "..",
+  "dist",
+  "browser",
+  "host.bundle.js"
+);
 const HARNESS_ORIGIN = "http://localhost:9876";
 const DEFAULT_SANDBOX_URL = "http://127.0.0.1:8081/sandbox.html";
 
@@ -50,7 +60,11 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
         };
         await page.evaluate(
           (cfg) =>
-            (window as unknown as { __mcpHost: { connect: (c: unknown) => Promise<void> } }).__mcpHost.connect(cfg),
+            (
+              window as unknown as {
+                __mcpHost: { connect: (c: unknown) => Promise<void> };
+              }
+            ).__mcpHost.connect(cfg),
           browserConfig
         );
       },
@@ -58,15 +72,27 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
       async executeTool(name, args) {
         return page.evaluate(
           ({ name, args }) =>
-            (window as unknown as { __mcpHost: { executeTool: (n: string, a: Record<string, unknown>) => Promise<SerializableToolResult> } }).__mcpHost.executeTool(name, args),
+            (
+              window as unknown as {
+                __mcpHost: {
+                  executeTool: (
+                    n: string,
+                    a: Record<string, unknown>
+                  ) => Promise<SerializableToolResult>;
+                };
+              }
+            ).__mcpHost.executeTool(name, args),
           { name, args }
         );
       },
 
       async getOpenedLinks() {
-        return page.evaluate(
-          () =>
-            (window as unknown as { __mcpHost: { getOpenedLinks: () => string[] } }).__mcpHost.getOpenedLinks()
+        return page.evaluate(() =>
+          (
+            window as unknown as {
+              __mcpHost: { getOpenedLinks: () => string[] };
+            }
+          ).__mcpHost.getOpenedLinks()
         );
       },
     };
@@ -74,9 +100,10 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
     await use(fixture);
 
     await page
-      .evaluate(
-        () =>
-          (window as unknown as { __mcpHost?: { teardown: () => Promise<void> } }).__mcpHost?.teardown()
+      .evaluate(() =>
+        (
+          window as unknown as { __mcpHost?: { teardown: () => Promise<void> } }
+        ).__mcpHost?.teardown()
       )
       .catch(() => {});
   },

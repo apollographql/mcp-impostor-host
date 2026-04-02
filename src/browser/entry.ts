@@ -1,5 +1,9 @@
 import { createHost, type HostConnection } from "../host.js";
-import type { McpHostBrowserAPI, BrowserHostConfig, SerializableToolResult } from "./types.js";
+import type {
+  McpHostBrowserAPI,
+  BrowserHostConfig,
+  SerializableToolResult,
+} from "./types.js";
 
 let connection: HostConnection | null = null;
 

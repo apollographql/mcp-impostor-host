@@ -55,9 +55,9 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
   }
 
   directives.push(
-    csp.baseUriDomains?.length
-      ? `base-uri ${csp.baseUriDomains.join(" ")}`
-      : "base-uri 'self'"
+    csp.baseUriDomains?.length ?
+      `base-uri ${csp.baseUriDomains.join(" ")}`
+    : "base-uri 'self'"
   );
 
   return directives.join("; ");
