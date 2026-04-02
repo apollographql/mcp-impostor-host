@@ -20,8 +20,10 @@ const BUNDLE_PATH = resolve(
   "browser",
   "host.bundle.js"
 );
-const HARNESS_ORIGIN = "http://localhost:9876";
 const DEFAULT_SANDBOX_URL = "http://127.0.0.1:8081/sandbox.html";
+// Harness page served by the sandbox server on localhost (same server,
+// different hostname → cross-origin from the sandbox iframe).
+const DEFAULT_HARNESS_URL = "http://localhost:8081/";
 
 export interface McpHostConnectConfig {
   uri: string;
@@ -40,16 +42,11 @@ export interface McpHostFixture {
 
 export const test = base.extend<{ mcpHost: McpHostFixture }>({
   mcpHost: async ({ page }, use) => {
-    await page.route(`${HARNESS_ORIGIN}/**`, (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "text/html",
-        body: "<!DOCTYPE html><html><head></head><body></body></html>",
-      });
-    });
-
+    // Inject the browser bundle — persists across navigations
     await page.addInitScript({ path: BUNDLE_PATH });
-    await page.goto(`${HARNESS_ORIGIN}/`);
+
+    // Navigate to the harness page (served by the sandbox server)
+    await page.goto(DEFAULT_HARNESS_URL);
 
     const fixture: McpHostFixture = {
       async connect(config) {
@@ -102,7 +99,9 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
     await page
       .evaluate(() =>
         (
-          window as unknown as { __mcpHost?: { teardown: () => Promise<void> } }
+          window as unknown as {
+            __mcpHost?: { teardown: () => Promise<void> };
+          }
         ).__mcpHost?.teardown()
       )
       .catch(() => {});

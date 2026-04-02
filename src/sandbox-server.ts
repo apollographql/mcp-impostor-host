@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function buildSandboxHtml(): string {
-  const script = readFileSync(join(__dirname, "sandbox.js"), "utf-8");
+  const script = readFileSync(join(__dirname, "sandbox.bundle.js"), "utf-8");
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>${script}</script></body></html>`;
 }
 
@@ -67,7 +67,26 @@ const port = parseInt(process.env["SANDBOX_PORT"] ?? "8081", 10);
 const sandboxHtml = buildSandboxHtml();
 
 const server = createServer((req, res) => {
-  if (req.url?.startsWith("/sandbox.html")) {
+  // Allow cross-origin requests from localhost (needed for Private Network Access)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.url === "/" || req.url === "") {
+    // Harness page — minimal HTML for the host to run in.
+    // Served on localhost so the browser has a real loopback origin
+    // (required for Chrome's Private Network Access).
+    res.writeHead(200, {
+      "Content-Type": "text/html",
+      "Cache-Control": "no-store",
+    });
+    res.end("<!DOCTYPE html><html><head></head><body></body></html>");
+  } else if (req.url?.startsWith("/sandbox.html")) {
     const url = new URL(req.url, `http://localhost:${port}`);
     const cspParam = url.searchParams.get("csp");
 

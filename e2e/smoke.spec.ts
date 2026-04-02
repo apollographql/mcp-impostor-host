@@ -1,48 +1,40 @@
 import { test } from "../src/playwright/index.js";
 import { expect } from "@playwright/test";
 
-test("fixture sets up window.__mcpHost on the page", async ({ page }) => {
-  // mcpHost fixture handles page.route + addInitScript + goto
-  const hasApi = await page.evaluate(() => {
-    const host = (window as unknown as { __mcpHost?: unknown }).__mcpHost;
-    return host != null && typeof host === "object";
-  });
+const MCP_URI = "http://localhost:3456/mcp";
 
-  expect(hasApi).toBe(true);
+test("hello tool renders Hello world in iframe", async ({ page, mcpHost }) => {
+  await mcpHost.connect({ uri: MCP_URI });
+  const { result, hasView } = await mcpHost.executeTool("hello", {});
+
+  expect(result.isError).toBeFalsy();
+  expect(hasView).toBe(true);
+
+  // Double iframe: outer sandbox proxy → inner app
+  const app = page
+    .frameLocator("iframe")
+    .first()
+    .frameLocator("iframe")
+    .first();
+  await expect(app.locator("h1")).toHaveText("Hello world");
 });
 
-test("fixture exposes connect, executeTool, teardown on window", async ({
+test("greet tool renders greeting with name argument", async ({
   page,
-}) => {
-  const methods = await page.evaluate(() => {
-    const host = (window as unknown as { __mcpHost: Record<string, unknown> })
-      .__mcpHost;
-    return {
-      connect: typeof host.connect,
-      executeTool: typeof host.executeTool,
-      getOpenedLinks: typeof host.getOpenedLinks,
-      teardown: typeof host.teardown,
-    };
-  });
-
-  expect(methods).toEqual({
-    connect: "function",
-    executeTool: "function",
-    getOpenedLinks: "function",
-    teardown: "function",
-  });
-});
-
-test("mcpHost fixture provides typed API", async ({ mcpHost }) => {
-  expect(mcpHost).toBeDefined();
-  expect(typeof mcpHost.connect).toBe("function");
-  expect(typeof mcpHost.executeTool).toBe("function");
-  expect(typeof mcpHost.getOpenedLinks).toBe("function");
-});
-
-test("getOpenedLinks returns empty array before connect", async ({
   mcpHost,
 }) => {
-  const links = await mcpHost.getOpenedLinks();
-  expect(links).toEqual([]);
+  await mcpHost.connect({ uri: MCP_URI });
+  const { result, hasView } = await mcpHost.executeTool("greet", {
+    name: "Playwright",
+  });
+
+  expect(result.isError).toBeFalsy();
+  expect(hasView).toBe(true);
+
+  const app = page
+    .frameLocator("iframe")
+    .first()
+    .frameLocator("iframe")
+    .first();
+  await expect(app.locator("#greeting")).toHaveText("Hello, Playwright!");
 });
