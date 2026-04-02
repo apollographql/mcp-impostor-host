@@ -1,6 +1,4 @@
 import { test as base, type FrameLocator } from "@playwright/test";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import type {
   BrowserHostConfig,
   SerializableToolResult,
@@ -9,18 +7,10 @@ import type {
   RecordedLogMessage,
 } from "../browser/types.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const BUNDLE_PATH = resolve(
-  __dirname,
-  "..",
-  "..",
-  "dist",
-  "browser",
-  "host.bundle.js"
-);
 const DEFAULT_SANDBOX_URL = "http://127.0.0.1:8081/sandbox.html";
 // Harness page served by the sandbox server on localhost (same server,
 // different hostname → cross-origin from the sandbox iframe).
+// The page includes the host bundle via <script> tag.
 const DEFAULT_HARNESS_URL = "http://localhost:8081/";
 
 export interface McpHostConnectConfig {
@@ -48,10 +38,9 @@ export interface McpHostFixture {
 
 export const test = base.extend<{ mcpHost: McpHostFixture }>({
   mcpHost: async ({ page }, use) => {
-    // Inject the browser bundle — persists across navigations
-    await page.addInitScript({ path: BUNDLE_PATH });
-
-    // Navigate to the harness page (served by the sandbox server)
+    // Navigate to the harness page (served by the sandbox server).
+    // The page loads the host bundle via <script> tag, making
+    // window.__mcpHost available automatically.
     await page.goto(DEFAULT_HARNESS_URL);
 
     const fixture: McpHostFixture = {

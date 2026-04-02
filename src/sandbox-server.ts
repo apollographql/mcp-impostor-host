@@ -11,6 +11,11 @@ function buildSandboxHtml(): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>${script}</script></body></html>`;
 }
 
+const hostBundle = readFileSync(
+  join(__dirname, "browser", "host.bundle.js"),
+  "utf-8"
+);
+
 // Applied when ui.csp is omitted entirely, per spec §"Restrictive Default"
 const DEFAULT_CSP =
   "default-src 'none'; " +
@@ -66,14 +71,27 @@ const server = createServer((req, res) => {
   }
 
   if (req.url === "/" || req.url === "") {
-    // Harness page — minimal HTML for the host to run in.
-    // Served on localhost so the browser has a real loopback origin
-    // (required for Chrome's Private Network Access).
+    // Harness page — hosts the MCP Apps host bundle.
+    // window.__mcpHost is available in the browser console for manual testing.
     res.writeHead(200, {
       "Content-Type": "text/html",
       "Cache-Control": "no-store",
     });
-    res.end("<!DOCTYPE html><html><head></head><body></body></html>");
+    res.end(
+      `<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8"><title>MCP Impostor Host</title></head>
+  <body>
+    <script src="/host.bundle.js"></script>
+  </body>
+</html>`
+    );
+  } else if (req.url === "/host.bundle.js") {
+    res.writeHead(200, {
+      "Content-Type": "application/javascript",
+      "Cache-Control": "no-store",
+    });
+    res.end(hostBundle);
   } else if (req.url?.startsWith("/sandbox.html")) {
     const url = new URL(req.url, `http://localhost:${port}`);
     const cspParam = url.searchParams.get("csp");
