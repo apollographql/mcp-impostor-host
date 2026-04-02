@@ -3,38 +3,27 @@ import { expect } from "@playwright/test";
 
 const MCP_URI = "http://localhost:3456/mcp";
 
-test("hello tool renders Hello world in iframe", async ({ page, mcpHost }) => {
+test("hello tool renders Hello world in iframe", async ({ mcpHost }) => {
   await mcpHost.connect({ uri: MCP_URI });
-  const { result, hasView } = await mcpHost.executeTool("hello", {});
+  const { result, hasView, appFrame } = await mcpHost.executeTool(
+    "hello",
+    {}
+  );
 
   expect(result.isError).toBeFalsy();
   expect(hasView).toBe(true);
-
-  // Double iframe: outer sandbox proxy → inner app
-  const app = page
-    .locator("iframe")
-    .contentFrame()
-    .locator("iframe")
-    .contentFrame();
-  await expect(app.locator("h1")).toHaveText("Hello world");
+  await expect(appFrame!.locator("h1")).toHaveText("Hello world");
 });
 
-test("greet tool renders greeting with name argument", async ({
-  page,
-  mcpHost,
-}) => {
+test("greet tool renders greeting with name argument", async ({ mcpHost }) => {
   await mcpHost.connect({ uri: MCP_URI });
-  const { result, hasView } = await mcpHost.executeTool("greet", {
+  const { result, hasView, appFrame } = await mcpHost.executeTool("greet", {
     name: "Playwright",
   });
 
   expect(result.isError).toBeFalsy();
   expect(hasView).toBe(true);
-
-  const app = page
-    .locator("iframe")
-    .contentFrame()
-    .locator("iframe")
-    .contentFrame();
-  await expect(app.locator("#greeting")).toHaveText("Hello, Playwright!");
+  await expect(appFrame!.locator("#greeting")).toHaveText(
+    "Hello, Playwright!"
+  );
 });

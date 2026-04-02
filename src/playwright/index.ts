@@ -1,4 +1,4 @@
-import { test as base } from "@playwright/test";
+import { test as base, type FrameLocator } from "@playwright/test";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
@@ -31,12 +31,17 @@ export interface McpHostConnectConfig {
   containerDimensions?: BrowserHostConfig["containerDimensions"];
 }
 
+export interface McpToolResult extends SerializableToolResult {
+  /** Locator for the inner app frame (inside the sandbox iframe). */
+  appFrame: FrameLocator | null;
+}
+
 export interface McpHostFixture {
   connect(config: McpHostConnectConfig): Promise<void>;
   executeTool(
     name: string,
     args: Record<string, unknown>
-  ): Promise<SerializableToolResult>;
+  ): Promise<McpToolResult>;
   getOpenedLinks(): Promise<string[]>;
 }
 
@@ -67,7 +72,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
       },
 
       async executeTool(name, args) {
-        return page.evaluate(
+        const serializable = await page.evaluate(
           ({ name, args }) =>
             (
               window as unknown as {
@@ -81,6 +86,16 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
             ).__mcpHost.executeTool(name, args),
           { name, args }
         );
+
+        const appFrame = serializable.hasView
+          ? page
+              .locator("iframe")
+              .contentFrame()
+              .locator("iframe")
+              .contentFrame()
+          : null;
+
+        return { ...serializable, appFrame };
       },
 
       async getOpenedLinks() {
