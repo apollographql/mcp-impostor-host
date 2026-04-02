@@ -22,7 +22,7 @@ export interface HostConnection {
   readonly openedLinks: readonly string[];
   /** Optional handler called when the view requests a link to be opened. */
   onOpenLink: ((url: string) => void) | null;
-  [Symbol.asyncDispose](): Promise<void>;
+  teardown(): Promise<void>;
 }
 
 export interface Host {
@@ -285,7 +285,7 @@ export function createHost(config: HostConfig): Host {
           return { result: callResult, view: null };
         },
 
-        async [Symbol.asyncDispose]() {
+        async teardown() {
           if (activeBridge) {
             try {
               await activeBridge.teardownResource({});
