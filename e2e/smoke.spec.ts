@@ -12,10 +12,10 @@ test("hello tool renders Hello world in iframe", async ({ page, mcpHost }) => {
 
   // Double iframe: outer sandbox proxy → inner app
   const app = page
-    .frameLocator("iframe")
-    .first()
-    .frameLocator("iframe")
-    .first();
+    .locator("iframe")
+    .contentFrame()
+    .locator("iframe")
+    .contentFrame();
   await expect(app.locator("h1")).toHaveText("Hello world");
 });
 
@@ -32,9 +32,9 @@ test("greet tool renders greeting with name argument", async ({
   expect(hasView).toBe(true);
 
   const app = page
-    .frameLocator("iframe")
-    .first()
-    .frameLocator("iframe")
-    .first();
+    .locator("iframe")
+    .contentFrame()
+    .locator("iframe")
+    .contentFrame();
   await expect(app.locator("#greeting")).toHaveText("Hello, Playwright!");
 });
