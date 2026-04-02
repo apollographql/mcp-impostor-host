@@ -1,10 +1,7 @@
 import { test } from "../src/playwright/index.js";
 import { expect } from "@playwright/test";
 
-test("fixture sets up window.__mcpHost on the page", async ({
-  page,
-  mcpHost,
-}) => {
+test("fixture sets up window.__mcpHost on the page", async ({ page }) => {
   // mcpHost fixture handles page.route + addInitScript + goto
   const hasApi = await page.evaluate(() => {
     const host = (window as unknown as { __mcpHost?: unknown }).__mcpHost;
@@ -16,7 +13,6 @@ test("fixture sets up window.__mcpHost on the page", async ({
 
 test("fixture exposes connect, executeTool, teardown on window", async ({
   page,
-  mcpHost,
 }) => {
   const methods = await page.evaluate(() => {
     const host = (window as unknown as { __mcpHost: Record<string, unknown> })
