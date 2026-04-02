@@ -16,10 +16,32 @@ export interface ToolResult {
   view: HTMLIFrameElement | null;
 }
 
+export interface RecordedMessage {
+  role: string;
+  content: unknown;
+}
+
+export interface RecordedModelContextUpdate {
+  content?: unknown;
+  structuredContent?: Record<string, unknown>;
+}
+
+export interface RecordedLogMessage {
+  level: string;
+  logger?: string;
+  data: unknown;
+}
+
 export interface HostConnection {
   executeTool(name: string, args: Record<string, unknown>): Promise<ToolResult>;
   /** All URLs passed to `ui/open-link` since the connection was established. */
   readonly openedLinks: readonly string[];
+  /** All messages sent by the view via `ui/message`. */
+  readonly messages: readonly RecordedMessage[];
+  /** All model context updates sent by the view via `ui/update-model-context`. */
+  readonly modelContextUpdates: readonly RecordedModelContextUpdate[];
+  /** All log messages sent by the view via `notifications/message`. */
+  readonly logMessages: readonly RecordedLogMessage[];
   /** Optional handler called when the view requests a link to be opened. */
   onOpenLink: ((url: string) => void) | null;
   teardown(): Promise<void>;
@@ -39,6 +61,8 @@ export interface HostConfig {
   containerDimensions?: ({ height: number } | { maxHeight?: number }) &
     ({ width: number } | { maxWidth?: number });
 }
+
+export const TEARDOWN_REASON = "mcp-impostor-host: test teardown";
 
 const HOST_INFO = { name: "mcp-impostor-host", version: "0.0.1" } as const;
 
@@ -99,6 +123,9 @@ async function mountApp(
   args: Record<string, unknown>,
   callResultPromise: Promise<CallToolResult>,
   openedLinks: string[],
+  messages: RecordedMessage[],
+  modelContextUpdates: RecordedModelContextUpdate[],
+  logMessages: RecordedLogMessage[],
   getOpenLinkHandler: () => ((url: string) => void) | null,
   onTeardownRequested: () => void
 ): Promise<AppBridge> {
@@ -109,6 +136,9 @@ async function mountApp(
     HOST_INFO,
     {
       openLinks: {},
+      logging: {},
+      message: {},
+      updateModelContext: {},
       serverTools: serverCapabilities?.tools ?? undefined,
       serverResources: serverCapabilities?.resources ?? undefined,
       sandbox: csp || permissions ? { csp, permissions } : undefined,
@@ -131,6 +161,20 @@ async function mountApp(
     return {};
   };
 
+  bridge.onmessage = async ({ role, content }) => {
+    messages.push({ role, content });
+    return {};
+  };
+
+  bridge.onupdatemodelcontext = async ({ content, structuredContent }) => {
+    modelContextUpdates.push({ content, structuredContent });
+    return {};
+  };
+
+  bridge.onloggingmessage = ({ level, logger, data }) => {
+    logMessages.push({ level, logger, data });
+  };
+
   bridge.onsizechange = ({ width, height }) => {
     if (width != null) iframe.style.width = `${width}px`;
     if (height != null) iframe.style.height = `${height}px`;
@@ -142,7 +186,7 @@ async function mountApp(
 
   bridge.onrequestteardown = async () => {
     try {
-      await bridge.teardownResource({});
+      await bridge.teardownResource({ reason: TEARDOWN_REASON });
     } catch {
       // view may already be gone
     }
@@ -194,13 +238,28 @@ export function createHost(config: HostConfig): Host {
 
       let activeBridge: AppBridge | null = null;
       let activeIframe: HTMLIFrameElement | null = null;
+      let toolExecuted = false;
       const openedLinks: string[] = [];
+      const messages: RecordedMessage[] = [];
+      const modelContextUpdates: RecordedModelContextUpdate[] = [];
+      const logMessages: RecordedLogMessage[] = [];
 
       const connection: HostConnection = {
         openedLinks,
+        messages,
+        modelContextUpdates,
+        logMessages,
         onOpenLink: null,
 
         async executeTool(name, args) {
+          if (toolExecuted) {
+            throw new Error(
+              "executeTool() can only be called once per connection. " +
+                "Follow-up tool calls should be made by the view through the AppBridge."
+            );
+          }
+          toolExecuted = true;
+
           const tool = tools.get(name);
           if (!tool) {
             throw new Error(`Unknown tool: "${name}"`);
@@ -285,6 +344,9 @@ export function createHost(config: HostConfig): Host {
               args,
               callResultPromise,
               openedLinks,
+              messages,
+              modelContextUpdates,
+              logMessages,
               () => connection.onOpenLink,
               () => {
                 iframe.remove();
@@ -303,7 +365,7 @@ export function createHost(config: HostConfig): Host {
         async teardown() {
           if (activeBridge) {
             try {
-              await activeBridge.teardownResource({});
+              await activeBridge.teardownResource({ reason: TEARDOWN_REASON });
             } catch {
               // view may already be gone
             }

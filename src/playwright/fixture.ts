@@ -4,6 +4,9 @@ import { fileURLToPath } from "node:url";
 import type {
   BrowserHostConfig,
   SerializableToolResult,
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
 } from "../browser/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,6 +41,9 @@ export interface McpHostFixture {
     args: Record<string, unknown>
   ): Promise<McpToolResult>;
   getOpenedLinks(): Promise<string[]>;
+  getMessages(): Promise<RecordedMessage[]>;
+  getModelContextUpdates(): Promise<RecordedModelContextUpdate[]>;
+  getLogMessages(): Promise<RecordedLogMessage[]>;
 }
 
 export const test = base.extend<{ mcpHost: McpHostFixture }>({
@@ -82,8 +88,9 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
           { name, args }
         );
 
-        const appFrame = serializable.hasView
-          ? page
+        const appFrame =
+          serializable.hasView ?
+            page
               .locator("iframe")
               .contentFrame()
               .locator("iframe")
@@ -100,6 +107,38 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
               __mcpHost: { getOpenedLinks: () => string[] };
             }
           ).__mcpHost.getOpenedLinks()
+        );
+      },
+
+      async getMessages() {
+        return page.evaluate(() =>
+          (
+            window as unknown as {
+              __mcpHost: { getMessages: () => RecordedMessage[] };
+            }
+          ).__mcpHost.getMessages()
+        );
+      },
+
+      async getModelContextUpdates() {
+        return page.evaluate(() =>
+          (
+            window as unknown as {
+              __mcpHost: {
+                getModelContextUpdates: () => RecordedModelContextUpdate[];
+              };
+            }
+          ).__mcpHost.getModelContextUpdates()
+        );
+      },
+
+      async getLogMessages() {
+        return page.evaluate(() =>
+          (
+            window as unknown as {
+              __mcpHost: { getLogMessages: () => RecordedLogMessage[] };
+            }
+          ).__mcpHost.getLogMessages()
         );
       },
     };

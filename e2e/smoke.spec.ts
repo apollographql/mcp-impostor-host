@@ -5,10 +5,7 @@ const MCP_URI = "http://localhost:3456/mcp";
 
 test("hello tool renders Hello world in iframe", async ({ mcpHost }) => {
   await mcpHost.connect({ uri: MCP_URI });
-  const { result, hasView, appFrame } = await mcpHost.executeTool(
-    "hello",
-    {}
-  );
+  const { result, hasView, appFrame } = await mcpHost.executeTool("hello", {});
 
   expect(result.isError).toBeFalsy();
   expect(hasView).toBe(true);
@@ -23,7 +20,5 @@ test("greet tool renders greeting with name argument", async ({ mcpHost }) => {
 
   expect(result.isError).toBeFalsy();
   expect(hasView).toBe(true);
-  await expect(appFrame!.locator("#greeting")).toHaveText(
-    "Hello, Playwright!"
-  );
+  await expect(appFrame!.locator("#greeting")).toHaveText("Hello, Playwright!");
 });

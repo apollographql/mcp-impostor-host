@@ -25,40 +25,28 @@ const DEFAULT_CSP =
   "base-uri 'self'";
 
 function buildCspHeader(csp: McpUiResourceCsp): string {
+  const resourceDomains = csp.resourceDomains?.join(" ") ?? "";
+  const connectDomains = csp.connectDomains?.join(" ") ?? "";
+  const frameDomains = csp.frameDomains?.join(" ") ?? "";
+  const baseUriDomains = csp.baseUriDomains?.join(" ") ?? "";
+
+  // Baseline directives always present per spec.
+  // resourceDomains/connectDomains are appended when declared.
   const directives = [
     "default-src 'none'",
-    "object-src 'none'", // always block dangerous features
+    `script-src 'self' 'unsafe-inline'${resourceDomains ? ` ${resourceDomains}` : ""}`,
+    `style-src 'self' 'unsafe-inline'${resourceDomains ? ` ${resourceDomains}` : ""}`,
+    `img-src 'self' data:${resourceDomains ? ` ${resourceDomains}` : ""}`,
+    `font-src 'self'${resourceDomains ? ` ${resourceDomains}` : ""}`,
+    `media-src 'self' data:${resourceDomains ? ` ${resourceDomains}` : ""}`,
+    connectDomains ?
+      `connect-src 'self' ${connectDomains}`
+    : "connect-src 'none'",
+    frameDomains ? `frame-src ${frameDomains}` : "frame-src 'none'",
+    frameDomains ? `child-src ${frameDomains}` : "child-src 'none'",
+    "object-src 'none'",
+    baseUriDomains ? `base-uri ${baseUriDomains}` : "base-uri 'self'",
   ];
-
-  if (csp.connectDomains?.length) {
-    directives.push(`connect-src ${csp.connectDomains.join(" ")}`);
-  }
-
-  if (csp.resourceDomains?.length) {
-    const domains = csp.resourceDomains.join(" ");
-    directives.push(
-      `img-src ${domains}`,
-      `script-src ${domains}`,
-      `style-src ${domains}`,
-      `font-src ${domains}`,
-      `media-src ${domains}`
-    );
-  }
-
-  // Explicit frame-src 'none' when not declared — base-uri does not inherit
-  // from default-src so both must always be emitted
-  if (csp.frameDomains?.length) {
-    const domains = csp.frameDomains.join(" ");
-    directives.push(`frame-src ${domains}`, `child-src ${domains}`);
-  } else {
-    directives.push("frame-src 'none'", "child-src 'none'");
-  }
-
-  directives.push(
-    csp.baseUriDomains?.length ?
-      `base-uri ${csp.baseUriDomains.join(" ")}`
-    : "base-uri 'self'"
-  );
 
   return directives.join("; ");
 }

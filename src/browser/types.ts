@@ -1,7 +1,17 @@
-import type { HostConfig } from "../host.js";
+import type {
+  HostConfig,
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
+} from "../host.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 export type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+export type {
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
+} from "../host.js";
 
 export interface BrowserHostConfig {
   uri: string;
@@ -21,5 +31,8 @@ export interface McpHostBrowserAPI {
     args: Record<string, unknown>
   ): Promise<SerializableToolResult>;
   getOpenedLinks(): string[];
+  getMessages(): RecordedMessage[];
+  getModelContextUpdates(): RecordedModelContextUpdate[];
+  getLogMessages(): RecordedLogMessage[];
   teardown(): Promise<void>;
 }

@@ -1,2 +1,10 @@
-export { createHost } from "./host.js";
-export type { Host, HostConfig, HostConnection, ToolResult } from "./host.js";
+export { createHost, TEARDOWN_REASON } from "./host.js";
+export type {
+  Host,
+  HostConfig,
+  HostConnection,
+  ToolResult,
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
+} from "./host.js";

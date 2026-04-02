@@ -3,6 +3,9 @@ import type {
   McpHostBrowserAPI,
   BrowserHostConfig,
   SerializableToolResult,
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
 } from "./types.js";
 
 let connection: HostConnection | null = null;
@@ -39,6 +42,21 @@ const api: McpHostBrowserAPI = {
   getOpenedLinks(): string[] {
     if (!connection) return [];
     return [...connection.openedLinks];
+  },
+
+  getMessages(): RecordedMessage[] {
+    if (!connection) return [];
+    return [...connection.messages];
+  },
+
+  getModelContextUpdates(): RecordedModelContextUpdate[] {
+    if (!connection) return [];
+    return [...connection.modelContextUpdates];
+  },
+
+  getLogMessages(): RecordedLogMessage[] {
+    if (!connection) return [];
+    return [...connection.logMessages];
   },
 
   async teardown(): Promise<void> {

@@ -7,4 +7,7 @@ export type {
 export type {
   SerializableToolResult,
   CallToolResult,
+  RecordedMessage,
+  RecordedModelContextUpdate,
+  RecordedLogMessage,
 } from "../browser/types.js";
