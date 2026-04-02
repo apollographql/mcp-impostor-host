@@ -1,2 +1,14 @@
 node_modules
 dist
+
+# tsc artifacts emitted outside dist/ (stale from misconfigured builds)
+*.d.ts
+*.d.ts.map
+*.js.map
+
+# Legitimate .js files that should NOT be ignored
+!esbuild.config.js
+!bin/*.js
+
+# Playwright
+test-results/
