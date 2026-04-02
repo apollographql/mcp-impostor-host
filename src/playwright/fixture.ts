@@ -7,11 +7,20 @@ import type {
   RecordedLogMessage,
 } from "../browser/types.js";
 
-const DEFAULT_SANDBOX_URL = "http://127.0.0.1:8081/sandbox.html";
-// Harness page served by the sandbox server on localhost (same server,
-// different hostname → cross-origin from the sandbox iframe).
-// The page includes the host bundle via <script> tag.
+// The sandbox server listens on a single port but serves two roles:
+//
+// 1. Harness page at http://localhost:{port}/
+//    Loads the host bundle, provides window.__mcpHost for manual
+//    and automated testing.
+//
+// 2. Sandbox iframe at http://127.0.0.1:{port}/sandbox.html
+//    Runs the sandbox proxy with CSP enforcement.
+//
+// Using different hostnames (localhost vs 127.0.0.1) on the same port
+// gives us cross-origin isolation between the harness and sandbox,
+// which the MCP Apps spec requires.
 const DEFAULT_HARNESS_URL = "http://localhost:8081/";
+const DEFAULT_SANDBOX_URL = "http://127.0.0.1:8081/sandbox.html";
 
 export interface McpHostConnectConfig {
   uri: string;
@@ -38,9 +47,6 @@ export interface McpHostFixture {
 
 export const test = base.extend<{ mcpHost: McpHostFixture }>({
   mcpHost: async ({ page }, use) => {
-    // Navigate to the harness page (served by the sandbox server).
-    // The page loads the host bundle via <script> tag, making
-    // window.__mcpHost available automatically.
     await page.goto(DEFAULT_HARNESS_URL);
 
     const fixture: McpHostFixture = {

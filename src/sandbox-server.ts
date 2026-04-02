@@ -35,8 +35,6 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
   const frameDomains = csp.frameDomains?.join(" ") ?? "";
   const baseUriDomains = csp.baseUriDomains?.join(" ") ?? "";
 
-  // Baseline directives always present per spec.
-  // resourceDomains/connectDomains are appended when declared.
   const directives = [
     "default-src 'none'",
     `script-src 'self' 'unsafe-inline'${resourceDomains ? ` ${resourceDomains}` : ""}`,
@@ -59,20 +57,28 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
 const port = parseInt(process.env["SANDBOX_PORT"] ?? "8081", 10);
 const sandboxHtml = buildSandboxHtml();
 
+// This server serves two roles on the same port:
+//
+// 1. Harness page at http://localhost:{port}/
+//    Loads the host bundle so window.__mcpHost is available for
+//    manual testing (browser console) and Playwright automation.
+//
+// 2. Sandbox proxy at http://127.0.0.1:{port}/sandbox.html
+//    Serves the sandbox iframe with CSP headers. Uses a different
+//    hostname (127.0.0.1 vs localhost) on the same port to get
+//    cross-origin isolation, which the MCP Apps spec requires.
 const server = createServer((req, res) => {
-  // Allow cross-origin requests from localhost (needed for Private Network Access)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Private-Network", "true");
-
   if (req.method === "OPTIONS") {
+    // CORS preflight — needed for cross-origin sandbox iframe loading
+    // and Chrome's Private Network Access checks.
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
     res.writeHead(204);
     res.end();
     return;
   }
 
   if (req.url === "/" || req.url === "") {
-    // Harness page — hosts the MCP Apps host bundle.
-    // window.__mcpHost is available in the browser console for manual testing.
     res.writeHead(200, {
       "Content-Type": "text/html",
       "Cache-Control": "no-store",
@@ -110,6 +116,8 @@ const server = createServer((req, res) => {
       "Content-Type": "text/html",
       "Cache-Control": "no-store",
       "Content-Security-Policy": cspHeader,
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Private-Network": "true",
     });
     res.end(sandboxHtml);
   } else {
@@ -120,6 +128,6 @@ const server = createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(
-    `[mcp-impostor-host] Sandbox server running on http://localhost:${port}`
+    `[mcp-impostor-host] Server running on http://localhost:${port}`
   );
 });
