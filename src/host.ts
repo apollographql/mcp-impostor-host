@@ -81,7 +81,8 @@ function loadSandboxProxy(
   permissions: McpUiResourcePermissions | undefined
 ): Promise<HTMLIFrameElement> {
   const iframe = document.createElement("iframe");
-  iframe.style.cssText = "width:100%;height:100%;border:none;";
+  iframe.style.cssText =
+    "width:100%;height:100%;border:none;background-color:transparent";
   iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
 
   const allow = buildAllowAttribute(permissions);
