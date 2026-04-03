@@ -7,6 +7,9 @@
   "bin": {
     "mcp-impostor-host": "./bin/mcp-impostor-host.js"
   },
+  "imports": {
+    "#package.json": "./package.json"
+  },
   "exports": {
     ".": {
       "types": "./dist/core/index.d.ts",
