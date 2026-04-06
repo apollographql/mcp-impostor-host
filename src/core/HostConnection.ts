@@ -1,38 +1,35 @@
 import type { Client } from "@modelcontextprotocol/sdk/client";
-import type { Tool } from "@modelcontextprotocol/sdk/types";
+import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
+
+export declare namespace HostConnection {
+  export interface Options {
+    tools: Tool[];
+    resources: Resource[];
+  }
+}
 
 export class HostConnection {
   private client: Client;
-  private toolInfoByName = new Map<string, Tool>();
+  private toolsByName = new Map<string, Tool>();
+  private resourcesByUri = new Map<string, Resource>();
 
-  constructor(client: Client) {
+  constructor(client: Client, options: HostConnection.Options) {
     this.client = client;
+
+    for (const tool of options.tools) {
+      this.toolsByName.set(tool.name, tool);
+    }
+
+    for (const resource of options.resources) {
+      this.resourcesByUri.set(resource.uri, resource);
+    }
   }
 
-  private nextToolCursor: string | undefined;
+  async executeTool(name: string, args?: Record<string, any>) {
+    const tool = this.toolsByName.get(name);
 
-  private async findTool(name: string): Promise<Tool | undefined> {
-    let tool: Tool | undefined = this.toolInfoByName.get(name);
-
-    if (tool) {
-      return tool;
+    if (!tool) {
+      throw new Error(`Could not find tool '${name}'`);
     }
-
-    const result = await this.client.listTools({ cursor: this.nextToolCursor });
-    this.nextToolCursor = result.nextCursor;
-
-    for (const toolDef of result.tools) {
-      this.toolInfoByName.set(toolDef.name, toolDef);
-
-      if (toolDef.name === name) {
-        tool = toolDef;
-      }
-    }
-
-    if (!tool && this.nextToolCursor) {
-      tool = await this.findTool(name);
-    }
-
-    return tool;
   }
 }
