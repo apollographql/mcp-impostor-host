@@ -4,7 +4,6 @@ import pkg from "#package.json" with { type: "json " };
 import { HostConnection } from "./HostConnection";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
-import { fetchToken } from "@modelcontextprotocol/sdk/client/auth";
 
 interface SandboxConfig {
   url: string;
@@ -38,14 +37,14 @@ export class Host {
     await this.client.connect(transport);
 
     const [tools, resources] = await Promise.all([
-      this.fetchAllTools(),
-      this.fetchAllResources(),
+      this.#fetchAllTools(),
+      this.#fetchAllResources(),
     ]);
 
     return new HostConnection(this.client, { tools, resources });
   }
 
-  private async fetchAllTools() {
+  async #fetchAllTools() {
     const fetchTools = async (cursor?: string): Promise<Tool[]> => {
       const { tools, nextCursor } = await this.client.listTools({ cursor });
 
@@ -55,7 +54,7 @@ export class Host {
     return fetchTools();
   }
 
-  private async fetchAllResources() {
+  async #fetchAllResources() {
     const fetchResources = async (cursor?: string): Promise<Resource[]> => {
       const { resources, nextCursor } = await this.client.listResources({
         cursor,
