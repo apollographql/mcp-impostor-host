@@ -5,6 +5,7 @@ import {
   SANDBOX_RESOURCE_READY_METHOD,
   type McpUiResourceCsp,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
+import { DEFAULT_CSP } from "../utilities/index.js";
 
 if (window.self === window.top) {
   throw new Error("Sandbox must not be used outside the sandbox context.");
@@ -140,6 +141,10 @@ function normalizeDomains(domains: string[] | undefined) {
 }
 
 function buildCsp(csp: McpUiResourceCsp | undefined) {
+  if (!csp) {
+    return DEFAULT_CSP;
+  }
+
   const resourceDomains = normalizeDomains(csp?.resourceDomains);
   const connectDomains = normalizeDomains(csp?.resourceDomains);
   const frameDomains = normalizeDomains(csp?.frameDomains);
