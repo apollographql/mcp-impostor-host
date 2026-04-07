@@ -1,10 +1,10 @@
 import {
+  buildAllowAttribute,
   McpUiSandboxResourceReadyNotificationSchema,
   SANDBOX_PROXY_READY_METHOD,
   SANDBOX_RESOURCE_READY_METHOD,
   type McpUiResourceCsp,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { buildAllowAttribute } from "@modelcontextprotocol/ext-apps/app-bridge";
 
 if (window.self === window.top) {
   throw new Error("Sandbox must not be used outside the sandbox context.");
