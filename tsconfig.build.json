@@ -3,6 +3,6 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.browser.build.json" },
-    { "path": "./tsconfig.node.build.json" }
+    { "path": "./tsconfig.server.build.json" }
   ]
 }
