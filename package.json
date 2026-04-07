@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "mcp-impostor-host": "./bin/mcp-impostor-host.js"
+    "serve-impostor-host": "./bin/serve-impostor-host.js"
   },
   "imports": {
     "#package.json": "./package.json"
