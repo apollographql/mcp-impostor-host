@@ -10,7 +10,7 @@ export default defineConfig({
     emptyOutDir: false,
     rolldownOptions: {
       input: {
-        sandbox: resolve(import.meta.dirname, "src/sandbox/index.html"),
+        sandbox: resolve(import.meta.dirname, "src/sandbox/sandbox.html"),
       },
     },
   },
