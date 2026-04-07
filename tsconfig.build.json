@@ -1,14 +1,8 @@
 {
   "$schema": "https://www.schemastore.org/tsconfig.json",
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "lib": ["dom", "esnext"],
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true
-  },
-  "include": ["./src/"],
-  "exclude": ["./src/sandbox/script.ts"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.browser.build.json" },
+    { "path": "./tsconfig.node.build.json" }
+  ]
 }

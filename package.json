@@ -26,7 +26,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
-    "build": "tsc --project tsconfig.build.json && vite build",
+    "build": "tsc --build tsconfig.build.json && vite build",
     "test": "playwright test"
   },
   "peerDependencies": {
