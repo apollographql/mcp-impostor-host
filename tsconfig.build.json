@@ -4,7 +4,11 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "lib": ["dom", "esnext"]
+    "lib": ["dom", "esnext"],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true
   },
-  "include": ["src"]
+  "include": ["./src/"],
+  "exclude": ["./src/sandbox/script.ts"]
 }
