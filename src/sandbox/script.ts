@@ -120,31 +120,43 @@ window.parent.postMessage(
   HOST_ORIGIN,
 );
 
-function sanitizeDomain(domain: string) {
-  if (typeof domain !== "string") return "";
-  // Remove characters that could break out of CSP or HTML attributes
-  // Valid CSP sources shouldn't contain these characters
-  return domain.replace(/['"<>;]/g, "").trim();
+function normalizeDomains(domains: string[] | undefined) {
+  // Treat empty csp domains array as if the config was missing so that the
+  // fallback is used instead
+  if (!domains || domains.length === 0) {
+    return;
+  }
+
+  return domains
+    .map((domain) => {
+      if (typeof domain !== "string") return;
+
+      // Remove characters that could break out of CSP or HTML attributes
+      // Valid CSP sources shouldn't contain these characters
+      return domain.replace(/['"<>;]/g, "").trim();
+    })
+    .filter(Boolean)
+    .join(" ");
 }
 
 function buildCsp(csp: McpUiResourceCsp | undefined) {
-  const resourceDomains = csp?.resourceDomains?.map(sanitizeDomain);
-  const connectDomains = csp?.resourceDomains?.map(sanitizeDomain);
-  const frameDomains = csp?.frameDomains?.map(sanitizeDomain);
-  const baseUriDomains = csp?.baseUriDomains?.map(sanitizeDomain);
+  const resourceDomains = normalizeDomains(csp?.resourceDomains);
+  const connectDomains = normalizeDomains(csp?.resourceDomains);
+  const frameDomains = normalizeDomains(csp?.frameDomains);
+  const baseUriDomains = normalizeDomains(csp?.baseUriDomains);
 
-  return `
-default-src 'none';
-script-src 'self' 'unsafe-inline' ${resourceDomains?.join(" ") || ""};
-style-src 'self' 'unsafe-inline' ${resourceDomains?.join(" ") || ""};
-connect-src 'self' ${connectDomains?.join(" ") || ""};
-img-src 'self' data: ${resourceDomains?.join(" ") || ""};
-font-src 'self' ${resourceDomains?.join(" ") || ""};
-media-src 'self' data: ${resourceDomains?.join(" ") || ""};
-frame-src ${frameDomains?.join(" ") || "'none'"};
-object-src 'none';
-base-uri ${baseUriDomains?.join(" ") || "'self'"};
-  `.trim();
+  return [
+    `default-src 'none'`,
+    `script-src 'self' 'unsafe-inline' ${resourceDomains || ""}`,
+    `style-src 'self' 'unsafe-inline' ${resourceDomains || ""}`,
+    `connect-src 'self' ${connectDomains || ""}`,
+    `img-src 'self' data: ${resourceDomains || ""}`,
+    `font-src 'self' ${resourceDomains || ""}`,
+    `media-src 'self' data: ${resourceDomains || ""}`,
+    `frame-src ${frameDomains || "'none'"}`,
+    "object-src 'none'",
+    `base-uri ${baseUriDomains || "'self'"}`,
+  ].join("; ");
 }
 
 function injectCSP(html: string, csp: McpUiResourceCsp | undefined) {
