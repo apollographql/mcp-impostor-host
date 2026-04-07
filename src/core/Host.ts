@@ -41,7 +41,11 @@ export class Host {
       this.#fetchAllResources(),
     ]);
 
-    return new HostConnection(this.client, { tools, resources });
+    return new HostConnection(this.client, {
+      tools,
+      resources,
+      sandbox: this.config.sandbox,
+    });
   }
 
   async #fetchAllTools() {
