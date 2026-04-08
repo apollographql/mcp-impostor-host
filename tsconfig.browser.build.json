@@ -5,5 +5,5 @@
     "lib": ["dom", "esnext"]
   },
   "include": ["./src"],
-  "exclude": ["./src/sandbox"]
+  "exclude": ["./src/sandbox", "./src/playwright/harness"]
 }

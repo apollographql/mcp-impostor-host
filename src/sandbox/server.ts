@@ -39,19 +39,24 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
     .join("; ");
 }
 
+const args = process.argv.slice(2);
+const enablePlaywright = args.includes("--playwright");
+
 const port = parseInt(process.env["SANDBOX_PORT"] ?? "8080", 10);
 const sandboxHtml = readFileSync(join(__dirname, "sandbox.html"), "utf-8");
+const harnessHtml = enablePlaywright
+  ? readFileSync(join(__dirname, "..", "playwright", "harness", "harness.html"), "utf-8")
+  : null;
 
-// This server serves two roles on the same port:
+// This server serves two roles on the same port, using different
+// hostnames for cross-origin isolation (required by MCP Apps spec):
 //
-// 1. Harness page at http://localhost:{port}/
-//    Loads the host bundle so window.__mcpHost is available for
-//    manual testing (browser console) and Playwright automation.
+// 1. Sandbox proxy at http://127.0.0.1:{port}/sandbox.html
+//    Serves the sandbox iframe with CSP headers.
 //
-// 2. Sandbox proxy at http://127.0.0.1:{port}/sandbox.html
-//    Serves the sandbox iframe with CSP headers. Uses a different
-//    hostname (127.0.0.1 vs localhost) on the same port to get
-//    cross-origin isolation, which the MCP Apps spec requires.
+// 2. (opt-in via --playwright) Harness page at http://localhost:{port}/
+//    Loads the test harness React app with window.__mcpHost for
+//    Playwright automation.
 const server = createServer((req, res) => {
   if (req.url?.startsWith("/sandbox.html")) {
     const url = new URL(req.url, `http://localhost:${port}`);
@@ -73,13 +78,27 @@ const server = createServer((req, res) => {
         "Content-Security-Policy": cspHeader,
       })
       .end(sandboxHtml);
+  } else if (harnessHtml && (req.url === "/" || req.url === "/index.html")) {
+    res
+      .writeHead(200, {
+        "Content-Type": "text/html",
+      })
+      .end(harnessHtml);
   } else {
     res.writeHead(404).end();
   }
 });
 
 server.listen(port, () => {
-  console.log(
-    `[@apollo/mcp-impostor-host] Server running on http://localhost:${port}`,
-  );
+  const lines = [
+    `[@apollo/mcp-impostor-host] Sandbox server running on http://127.0.0.1:${port}`,
+  ];
+
+  if (enablePlaywright) {
+    lines.push(
+      `[@apollo/mcp-impostor-host] Playwright harness running on http://localhost:${port}`,
+    );
+  }
+
+  console.log(lines.join("\n"));
 });
