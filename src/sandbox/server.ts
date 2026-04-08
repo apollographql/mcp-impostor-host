@@ -45,12 +45,6 @@ const enablePlaywright = args.includes("--playwright");
 
 const port = parseInt(process.env["SANDBOX_PORT"] ?? "8080", 10);
 const sandboxHtml = readFileSync(join(__dirname, "sandbox.html"), "utf-8");
-const harnessHtml = enablePlaywright
-  ? readFileSync(
-      join(__dirname, "..", "playwright", "harness", "harness.html"),
-      "utf-8",
-    )
-  : null;
 
 // This server serves two roles on the same port, using different
 // hostnames for cross-origin isolation (required by MCP Apps spec):
@@ -80,7 +74,12 @@ app.get("/sandbox.html", (c) => {
   return c.html(sandboxHtml);
 });
 
-if (harnessHtml) {
+if (enablePlaywright) {
+  const harnessHtml = readFileSync(
+    join(__dirname, "..", "playwright", "harness", "harness.html"),
+    "utf-8",
+  );
+
   app.get("/", (c) => c.html(harnessHtml));
 }
 
