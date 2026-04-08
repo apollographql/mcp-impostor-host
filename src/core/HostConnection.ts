@@ -64,6 +64,10 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
     return this.#closed;
   }
 
+  get logger() {
+    return this.#logger;
+  }
+
   async callTool(
     name: string,
     args?: Record<string, any>,
