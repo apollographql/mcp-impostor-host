@@ -1,5 +1,4 @@
 import {
-  getToolUiResourceUri,
   RESOURCE_MIME_TYPE,
   type McpUiResourceCsp,
   type McpUiResourceMeta,
@@ -9,7 +8,6 @@ import type { Client } from "@modelcontextprotocol/sdk/client";
 import type {
   Resource,
   Tool,
-  CallToolResult as SdkCallToolResult,
   CallToolResult,
 } from "@modelcontextprotocol/sdk/types";
 import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
@@ -21,12 +19,6 @@ export declare namespace HostConnection {
     logger: Logger;
   }
 
-  export interface CallToolResult {
-    resultPromise: Promise<SdkCallToolResult>;
-    input: Record<string, any> | undefined;
-    uiResourcePromise?: Promise<HostConnection.UiResource>;
-  }
-
   export interface UiResource {
     html: string;
     csp: McpUiResourceCsp | undefined;
@@ -35,6 +27,12 @@ export declare namespace HostConnection {
 
   export interface Event {
     close: CustomEvent<never>;
+  }
+
+  export interface ToolExecution {
+    tool: Tool;
+    input: Record<string, unknown> | undefined;
+    resultPromise: Promise<CallToolResult>;
   }
 }
 
@@ -75,34 +73,18 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
 
   callTool(
     name: string,
-    args?: Record<string, any>,
-  ): HostConnection.CallToolResult {
+    args?: Record<string, unknown>,
+  ): HostConnection.ToolExecution {
     const tool = this.toolsByName.get(name);
 
     invariant(tool, `Tool not found: '${name}'.`);
 
-    const resourceUri = getToolUiResourceUri(tool);
-
     const resultPromise = this.#client.callTool({
       name,
       arguments: args,
-    }) as Promise<SdkCallToolResult>;
+    }) as Promise<CallToolResult>;
 
-    if (!resourceUri || !resourceUri.startsWith("ui://")) {
-      if (!resourceUri?.startsWith("ui://")) {
-        this.#logger.warn(
-          `The MCP server returned a 'resourceUri' that was not a UI resource. This resource is ignored. Got: '${resourceUri}'`,
-        );
-      }
-
-      return { resultPromise, input: args };
-    }
-
-    return {
-      resultPromise,
-      input: args,
-      uiResourcePromise: this.#getUiResource(resourceUri),
-    };
+    return { tool, input: args, resultPromise };
   }
 
   async close() {
@@ -111,7 +93,12 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
     this.dispatchTypedEvent("close", new CustomEvent("close"));
   }
 
-  async #getUiResource(uri: string): Promise<HostConnection.UiResource> {
+  async getUiResource(uri: string): Promise<HostConnection.UiResource> {
+    invariant(
+      uri.startsWith("ui://"),
+      `Expected a UI resource URI (ui:// scheme). Got: '${uri}'`,
+    );
+
     const resource = await this.#client.readResource({ uri });
 
     invariant(resource, `Resource not found: '${uri}'.`);

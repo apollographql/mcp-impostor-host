@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import {
   AppBridge,
   buildAllowAttribute,
+  getToolUiResourceUri,
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
@@ -12,20 +13,21 @@ import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
 export declare namespace Sandbox {
   export interface Props {
+    connection: HostConnection | null;
+    execution: HostConnection.ToolExecution | null;
     url: string;
-    connection: HostConnection;
-    toolResult: HostConnection.CallToolResult;
   }
 }
 
-export function Sandbox({ url, connection, toolResult }: Sandbox.Props) {
-  const { uiResourcePromise } = toolResult;
+export function Sandbox({ url, connection, execution }: Sandbox.Props) {
+  const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
+  const hasUiResource = !!(connection && execution && resourceUri);
 
   const refCallback = useCallback(
     (iframe: HTMLIFrameElement) => {
-      invariant(!connection.closed, "The connection is already closed.");
+      if (!connection || !execution || !resourceUri) return;
 
-      if (!uiResourcePromise) return;
+      invariant(!connection.closed, "The connection is already closed.");
 
       let initialized = false;
       let mounted = true;
@@ -42,7 +44,8 @@ export function Sandbox({ url, connection, toolResult }: Sandbox.Props) {
 
       connection.addEventListener("close", close);
 
-      uiResourcePromise
+      connection
+        .getUiResource(resourceUri)
         .then(async (uiResource) => {
           if (!mounted) {
             return;
@@ -91,9 +94,9 @@ export function Sandbox({ url, connection, toolResult }: Sandbox.Props) {
           bridge.sendSandboxResourceReady(uiResource);
 
           await init.promise;
-          bridge.sendToolInput({ arguments: toolResult.input });
+          bridge.sendToolInput({ arguments: execution.input });
 
-          const result = await toolResult.resultPromise;
+          const result = await execution.resultPromise;
           bridge.sendToolResult(result);
         })
         .catch((error) => {
@@ -108,10 +111,10 @@ export function Sandbox({ url, connection, toolResult }: Sandbox.Props) {
         connection.removeEventListener("close", close);
       };
     },
-    [connection, url, uiResourcePromise],
+    [connection, execution, resourceUri, url],
   );
 
-  return uiResourcePromise ? (
+  return hasUiResource ? (
     <iframe
       ref={refCallback}
       sandbox="allow-scripts allow-same-origin allow-forms"
