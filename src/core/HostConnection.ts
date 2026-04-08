@@ -7,7 +7,7 @@ import {
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { Client } from "@modelcontextprotocol/sdk/client";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
-import { invariant } from "../utilities/index.js";
+import { invariant, Logger } from "../utilities/index.js";
 
 export declare namespace HostConnection {
   export interface SandboxConfig {
@@ -19,6 +19,7 @@ export declare namespace HostConnection {
     tools: Tool[];
     resources: Resource[];
     sandbox: SandboxConfig;
+    logger: Logger;
   }
 
   export interface CallToolResult {
@@ -40,9 +41,12 @@ export class HostConnection {
   private resourcesByUri = new Map<string, Resource>();
   private sandbox: HostConnection.SandboxConfig;
 
+  #logger: Logger;
+
   constructor(client: Client, options: HostConnection.Options) {
     this.client = client;
     this.sandbox = options.sandbox;
+    this.#logger = options.logger;
 
     for (const tool of options.tools) {
       this.toolsByName.set(tool.name, tool);
@@ -65,8 +69,8 @@ export class HostConnection {
 
     if (!resourceUri || !resourceUri.startsWith("ui://")) {
       if (!resourceUri?.startsWith("ui://")) {
-        console.warn(
-          `[@apollo/mcp-impostor-host] MCP Server returned a resourceUri that was not a UI resource and is ignored. Got: '${resourceUri}'`,
+        this.#logger.warn(
+          `The MCP server returned a 'resourceUri' that was not a UI resource. Got: '${resourceUri}'`,
         );
       }
 

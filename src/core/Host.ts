@@ -4,10 +4,12 @@ import pkg from "#package.json" with { type: "json " };
 import { HostConnection } from "./HostConnection";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
+import { Logger } from "../utilities/index.js";
 
 export declare namespace Host {
   export interface Config {
     sandbox: HostConnection.SandboxConfig;
+    logLevel?: Logger.Level;
   }
 
   export interface ConnectOptions {
@@ -18,6 +20,7 @@ export declare namespace Host {
 export class Host {
   #config: Host.Config;
   #client: Client;
+  #logger: Logger;
 
   constructor(config: Host.Config) {
     this.#config = config;
@@ -28,6 +31,7 @@ export class Host {
       },
       { capabilities: { extensions: UI_EXTENSION_CAPABILITIES } },
     );
+    this.#logger = new Logger({ level: config.logLevel });
   }
 
   async connect(options: Host.ConnectOptions) {
@@ -43,6 +47,7 @@ export class Host {
       tools,
       resources,
       sandbox: this.#config.sandbox,
+      logger: this.#logger,
     });
   }
 
