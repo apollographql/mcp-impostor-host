@@ -5,23 +5,25 @@ import { HostConnection } from "./HostConnection";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
 
-interface SandboxConfig {
-  url: string;
-}
+export declare namespace Host {
+  export interface Config {
+    sandbox: Host.SandboxConfig;
+  }
 
-interface HostConfig {
-  sandbox: SandboxConfig;
-}
+  export interface ConnectOptions {
+    url: string;
+  }
 
-interface ConnectOptions {
-  url: string;
+  export interface SandboxConfig {
+    url: string;
+  }
 }
 
 export class Host {
-  private config: HostConfig;
+  private config: Host.Config;
   private client: Client;
 
-  constructor(config: HostConfig) {
+  constructor(config: Host.Config) {
     this.config = config;
     this.client = new Client(
       {
@@ -32,7 +34,7 @@ export class Host {
     );
   }
 
-  async connect(options: ConnectOptions) {
+  async connect(options: Host.ConnectOptions) {
     const transport = new StreamableHTTPClientTransport(new URL(options.url));
     await this.client.connect(transport);
 
