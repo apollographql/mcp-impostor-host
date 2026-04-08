@@ -21,7 +21,7 @@ export class Host {
   #logger: Logger;
   #connected = false;
 
-  constructor(config: Host.Config) {
+  constructor(config?: Host.Config) {
     this.#client = new Client(
       {
         name: "@apollo/mcp-impostor-host",
@@ -29,7 +29,7 @@ export class Host {
       },
       { capabilities: { extensions: UI_EXTENSION_CAPABILITIES } },
     );
-    this.#logger = new Logger({ level: config.logLevel });
+    this.#logger = new Logger({ level: config?.logLevel });
   }
 
   async connect(options: Host.ConnectOptions) {
