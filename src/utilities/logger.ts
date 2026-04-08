@@ -11,6 +11,8 @@ const LEVEL = {
   error: 3,
 } as const;
 
+const PREFIX = "[@apollo/mcp-impostor-host]";
+
 export declare namespace Logger {
   export type Level = keyof typeof LEVEL;
 }
@@ -24,25 +26,25 @@ export class Logger {
 
   debug(...data: any[]) {
     if (this.#level <= LEVEL.debug) {
-      console.debug(...data);
+      console.debug(PREFIX, ...data);
     }
   }
 
   info(...data: any[]) {
     if (this.#level <= LEVEL.info) {
-      console.log(...data);
+      console.log(PREFIX, ...data);
     }
   }
 
   warn(...data: any[]) {
     if (this.#level <= LEVEL.warn) {
-      console.warn(...data);
+      console.warn(PREFIX, ...data);
     }
   }
 
   error(...data: any[]) {
     if (this.#level <= LEVEL.error) {
-      console.error(...data);
+      console.error(PREFIX, ...data);
     }
   }
 }
