@@ -10,7 +10,7 @@ export default defineConfig({
     },
     {
       command: "npx tsx e2e/mock-server.ts",
-      url: "http://localhost:3456/mcp",
+      url: "http://localhost:3456",
       reuseExistingServer: true,
     },
   ],
