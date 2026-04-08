@@ -1,5 +1,6 @@
 import { test as base, type FrameLocator } from "@playwright/test";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
+import type { Host } from "../core/index.js";
 import type { McpHost } from "./types.js";
 
 declare global {
@@ -16,12 +17,15 @@ export interface CallToolResponse {
   appFrame: FrameLocator;
 }
 
-export interface McpHostFixture {
-  connect(url: string): Promise<void>;
+export interface McpHostConnection {
   callTool(
     name: string,
     args?: Record<string, unknown>,
   ): Promise<CallToolResponse>;
+}
+
+export interface McpHostFixture {
+  connect(options: Host.ConnectOptions): Promise<McpHostConnection>;
 }
 
 export const test = base.extend<{ mcpHost: McpHostFixture }>({
@@ -29,23 +33,28 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
     await page.goto(DEFAULT_HARNESS_URL);
 
     const fixture: McpHostFixture = {
-      async connect(url) {
-        await page.evaluate((url) => window.__mcpHost.connect(url), url);
-      },
-
-      async callTool(name, args) {
-        const response = await page.evaluate(
-          ({ name, args }) => window.__mcpHost.callTool(name, args),
-          { name, args },
+      async connect(options) {
+        await page.evaluate(
+          (url) => window.__mcpHost.connect(url),
+          options.url,
         );
 
-        const appFrame = page
-          .locator("iframe")
-          .contentFrame()
-          .locator("iframe")
-          .contentFrame();
+        return {
+          async callTool(name, args) {
+            const response = await page.evaluate(
+              ({ name, args }) => window.__mcpHost.callTool(name, args),
+              { name, args },
+            );
 
-        return { ...response, appFrame };
+            const appFrame = page
+              .locator("iframe")
+              .contentFrame()
+              .locator("iframe")
+              .contentFrame();
+
+            return { ...response, appFrame };
+          },
+        };
       },
     };
 
