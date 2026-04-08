@@ -9,16 +9,6 @@ import type { Client } from "@modelcontextprotocol/sdk/client";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
 import { invariant } from "../utilities/index.js";
 
-type ClientCallToolResult = Awaited<
-  ReturnType<typeof Client.prototype.callTool>
->;
-
-interface UiResource {
-  html: string;
-  csp: McpUiResourceCsp | undefined;
-  permissions: McpUiResourcePermissions | undefined;
-}
-
 export declare namespace HostConnection {
   export interface SandboxConfig {
     url: string;
@@ -29,6 +19,18 @@ export declare namespace HostConnection {
     tools: Tool[];
     resources: Resource[];
     sandbox: SandboxConfig;
+  }
+
+  export interface CallToolResult {
+    toolResult: Awaited<ReturnType<typeof Client.prototype.callTool>>;
+    toolInput: Record<string, any> | undefined;
+    uiResource?: HostConnection.UiResource;
+  }
+
+  export interface UiResource {
+    html: string;
+    csp: McpUiResourceCsp | undefined;
+    permissions: McpUiResourcePermissions | undefined;
   }
 }
 
@@ -54,17 +56,24 @@ export class HostConnection {
   async callTool(
     name: string,
     args?: Record<string, any>,
-  ): Promise<ClientCallToolResult> {
+  ): Promise<HostConnection.CallToolResult> {
     const tool = this.toolsByName.get(name);
 
     invariant(tool, `Tool not found: '${name}'.`);
 
     const resourceUri = getToolUiResourceUri(tool);
 
-    // MCP Apps require a `ui://` uri. If we get something different, we ignore
-    // it move on.
     if (!resourceUri || !resourceUri.startsWith("ui://")) {
-      return this.client.callTool({ name, arguments: args });
+      if (!resourceUri?.startsWith("ui://")) {
+        console.warn(
+          `[@apollo/mcp-impostor-host] MCP Server returned a resourceUri that was not a UI resource and is ignored. Got: '${resourceUri}'`,
+        );
+      }
+
+      return {
+        toolResult: await this.client.callTool({ name, arguments: args }),
+        toolInput: args,
+      };
     }
 
     invariant(
@@ -77,10 +86,10 @@ export class HostConnection {
       this.#getUiResource(resourceUri),
     ]);
 
-    return toolResult;
+    return { toolResult, toolInput: args, uiResource };
   }
 
-  async #getUiResource(uri: string): Promise<UiResource> {
+  async #getUiResource(uri: string): Promise<HostConnection.UiResource> {
     const resource = await this.client.readResource({ uri });
 
     invariant(resource, `Resource not found: '${uri}'.`);
@@ -99,10 +108,10 @@ export class HostConnection {
     const html = "blob" in content ? atob(content.blob) : content.text;
     const resourceDef = this.resourcesByUri.get(uri);
 
-    const uiMeta = (content._meta?.ui ?? resourceDef?._meta?.ui) as
+    const meta = (content._meta?.ui ?? resourceDef?._meta?.ui) as
       | McpUiResourceMeta
       | undefined;
 
-    return { html, csp: uiMeta?.csp, permissions: uiMeta?.permissions };
+    return { html, csp: meta?.csp, permissions: meta?.permissions };
   }
 }
