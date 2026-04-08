@@ -22,6 +22,7 @@ interface UiResource {
 export declare namespace HostConnection {
   export interface SandboxConfig {
     url: string;
+    selector?: Element;
   }
 
   export interface Options {

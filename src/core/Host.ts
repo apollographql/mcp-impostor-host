@@ -7,14 +7,10 @@ import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
 
 export declare namespace Host {
   export interface Config {
-    sandbox: Host.SandboxConfig;
+    sandbox: HostConnection.SandboxConfig;
   }
 
   export interface ConnectOptions {
-    url: string;
-  }
-
-  export interface SandboxConfig {
     url: string;
   }
 }
