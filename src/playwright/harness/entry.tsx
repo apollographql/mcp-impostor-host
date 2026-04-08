@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Host, type HostConnection } from "../../core/index.js";
 import { Sandbox } from "../../react/index.js";
 import { invariant } from "../../utilities/index.js";
@@ -16,52 +16,41 @@ declare global {
 }
 
 function Harness() {
+  const [host] = useState(() => new Host());
   const [connection, setConnection] = useState<HostConnection | null>(null);
   const [execution, setExecution] =
     useState<HostConnection.ToolExecution | null>(null);
 
-  const connectionRef = useRef<HostConnection | null>(null);
-  const hostRef = useRef(new Host());
-
-  useEffect(() => {
-    connectionRef.current = connection;
-  }, [connection]);
-
   useEffect(() => {
     window.__mcpHost = {
       async connect(url) {
-        const conn = await hostRef.current.connect({ url });
-        connectionRef.current = conn;
-        setConnection(conn);
+        setConnection(await host.connect({ url }));
       },
 
       async callTool(name, args) {
-        const connection = connectionRef.current;
-
         invariant(
           connection,
           "Host not connected. Call `connect()` before calling executing a tool call.",
         );
 
-        const exec = connection.callTool(name, args);
-        setExecution(exec);
+        const execution = connection.callTool(name, args);
+        setExecution(execution);
 
-        const result = await exec.resultPromise;
-
-        return { result, input: exec.input };
+        return {
+          result: await execution.resultPromise,
+          input: execution.input,
+        };
       },
 
       async teardown() {
-        const conn = connectionRef.current;
-        if (conn) {
-          await conn.close();
-          connectionRef.current = null;
+        if (connection) {
+          await connection.close();
           setConnection(null);
           setExecution(null);
         }
       },
     };
-  }, []);
+  }, [host, connection]);
 
   return (
     <Sandbox connection={connection} execution={execution} url={SANDBOX_URL} />
