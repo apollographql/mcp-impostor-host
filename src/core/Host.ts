@@ -8,7 +8,6 @@ import { invariant, Logger } from "../utilities/index.js";
 
 export declare namespace Host {
   export interface Config {
-    sandbox: HostConnection.SandboxConfig;
     logLevel?: Logger.Level;
   }
 
@@ -54,7 +53,6 @@ export class Host {
     const connection = new HostConnection(this.#client, {
       tools,
       resources,
-      sandbox: this.#config.sandbox,
       logger: this.#logger,
     });
 

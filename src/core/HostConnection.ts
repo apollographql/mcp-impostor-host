@@ -10,14 +10,9 @@ import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
 import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
 
 export declare namespace HostConnection {
-  export interface SandboxConfig {
-    url: string;
-  }
-
   export interface Options {
     tools: Tool[];
     resources: Resource[];
-    sandbox: SandboxConfig;
     logger: Logger;
   }
 
@@ -42,7 +37,6 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
   #client: Client;
   private toolsByName = new Map<string, Tool>();
   private resourcesByUri = new Map<string, Resource>();
-  #sandbox: HostConnection.SandboxConfig;
 
   #logger: Logger;
   #closed = false;
@@ -50,7 +44,6 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
   constructor(client: Client, options: HostConnection.Options) {
     super();
     this.#client = client;
-    this.#sandbox = options.sandbox;
     this.#logger = options.logger;
 
     for (const tool of options.tools) {
@@ -69,10 +62,6 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
 
   get closed() {
     return this.#closed;
-  }
-
-  getSandboxConfig() {
-    return this.#sandbox;
   }
 
   async callTool(
