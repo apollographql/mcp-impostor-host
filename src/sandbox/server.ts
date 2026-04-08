@@ -1,5 +1,6 @@
 import type { McpUiResourceCsp } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { createServer } from "node:http";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,7 +46,10 @@ const enablePlaywright = args.includes("--playwright");
 const port = parseInt(process.env["SANDBOX_PORT"] ?? "8080", 10);
 const sandboxHtml = readFileSync(join(__dirname, "sandbox.html"), "utf-8");
 const harnessHtml = enablePlaywright
-  ? readFileSync(join(__dirname, "..", "playwright", "harness", "harness.html"), "utf-8")
+  ? readFileSync(
+      join(__dirname, "..", "playwright", "harness", "harness.html"),
+      "utf-8",
+    )
   : null;
 
 // This server serves two roles on the same port, using different
@@ -57,39 +61,30 @@ const harnessHtml = enablePlaywright
 // 2. (opt-in via --playwright) Harness page at http://localhost:{port}/
 //    Loads the test harness React app with window.__mcpHost for
 //    Playwright automation.
-const server = createServer((req, res) => {
-  if (req.url?.startsWith("/sandbox.html")) {
-    const url = new URL(req.url, `http://localhost:${port}`);
-    const cspParam = url.searchParams.get("csp");
+const app = new Hono();
 
-    let cspHeader = DEFAULT_CSP;
-    if (cspParam) {
-      try {
-        const csp = JSON.parse(cspParam) as McpUiResourceCsp;
-        cspHeader = buildCspHeader(csp);
-      } catch {
-        // ignore malformed CSP param
-      }
+app.get("/sandbox.html", (c) => {
+  const cspParam = c.req.query("csp");
+
+  let cspHeader = DEFAULT_CSP;
+  if (cspParam) {
+    try {
+      const csp = JSON.parse(cspParam) as McpUiResourceCsp;
+      cspHeader = buildCspHeader(csp);
+    } catch {
+      // ignore malformed CSP param
     }
-
-    res
-      .writeHead(200, {
-        "Content-Type": "text/html",
-        "Content-Security-Policy": cspHeader,
-      })
-      .end(sandboxHtml);
-  } else if (harnessHtml && (req.url === "/" || req.url === "/index.html")) {
-    res
-      .writeHead(200, {
-        "Content-Type": "text/html",
-      })
-      .end(harnessHtml);
-  } else {
-    res.writeHead(404).end();
   }
+
+  c.header("Content-Security-Policy", cspHeader);
+  return c.html(sandboxHtml);
 });
 
-server.listen(port, () => {
+if (harnessHtml) {
+  app.get("/", (c) => c.html(harnessHtml));
+}
+
+serve({ fetch: app.fetch, port }, () => {
   const lines = [
     `[@apollo/mcp-impostor-host] Sandbox server running on http://127.0.0.1:${port}`,
   ];
