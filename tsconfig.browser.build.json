@@ -1,0 +1,9 @@
+{
+  "$schema": "https://www.schemastore.org/tsconfig.json",
+  "extends": "./tsconfig.base.build.json",
+  "compilerOptions": {
+    "lib": ["dom", "esnext"]
+  },
+  "include": ["./src"],
+  "exclude": ["./src/sandbox", "./src/playwright/harness"]
+}
