@@ -4,7 +4,7 @@ import pkg from "#package.json" with { type: "json " };
 import { HostConnection } from "./HostConnection";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
-import { Logger } from "../utilities/index.js";
+import { invariant, Logger } from "../utilities/index.js";
 
 export declare namespace Host {
   export interface Config {
@@ -21,6 +21,7 @@ export class Host {
   #config: Host.Config;
   #client: Client;
   #logger: Logger;
+  #connected = false;
 
   constructor(config: Host.Config) {
     this.#config = config;
@@ -35,20 +36,33 @@ export class Host {
   }
 
   async connect(options: Host.ConnectOptions) {
+    invariant(
+      !this.#connected,
+      "Host only supports one connection at a time. Call `close` on the connection before connecting again.",
+    );
+
     const transport = new StreamableHTTPClientTransport(new URL(options.url));
     await this.#client.connect(transport);
+
+    this.#connected = true;
 
     const [tools, resources] = await Promise.all([
       this.#fetchAllTools(),
       this.#fetchAllResources(),
     ]);
 
-    return new HostConnection(this.#client, {
+    const connection = new HostConnection(this.#client, {
       tools,
       resources,
       sandbox: this.#config.sandbox,
       logger: this.#logger,
     });
+
+    connection.addEventListener("close", () => {
+      this.#connected = false;
+    });
+
+    return connection;
   }
 
   async #fetchAllTools() {
