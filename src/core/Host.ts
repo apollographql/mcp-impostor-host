@@ -17,13 +17,11 @@ export declare namespace Host {
 }
 
 export class Host {
-  #config: Host.Config;
   #client: Client;
   #logger: Logger;
   #connected = false;
 
   constructor(config: Host.Config) {
-    this.#config = config;
     this.#client = new Client(
       {
         name: "@apollo/mcp-impostor-host",
