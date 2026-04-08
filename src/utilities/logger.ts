@@ -1,6 +1,6 @@
 export declare namespace Logger {
   export interface Options {
-    level?: keyof typeof LEVEL;
+    level?: keyof typeof LEVEL | undefined;
   }
 }
 
@@ -10,6 +10,10 @@ const LEVEL = {
   warn: 2,
   error: 3,
 } as const;
+
+export declare namespace Logger {
+  export type Level = keyof typeof LEVEL;
+}
 
 export class Logger {
   #level: number;
