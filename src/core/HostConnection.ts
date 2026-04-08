@@ -22,9 +22,9 @@ export declare namespace HostConnection {
   }
 
   export interface CallToolResult {
-    result: SdkCallToolResult;
+    resultPromise: Promise<SdkCallToolResult>;
     input: Record<string, any> | undefined;
-    uiResource?: HostConnection.UiResource;
+    uiResourcePromise?: Promise<HostConnection.UiResource>;
   }
 
   export interface UiResource {
@@ -95,15 +95,14 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
         );
       }
 
-      return { result: await resultPromise, input: args };
+      return { resultPromise, input: args };
     }
 
-    const [result, uiResource] = await Promise.all([
+    return {
       resultPromise,
-      this.#getUiResource(resourceUri),
-    ]);
-
-    return { result, input: args, uiResource };
+      input: args,
+      uiResourcePromise: this.#getUiResource(resourceUri),
+    };
   }
 
   async close() {
