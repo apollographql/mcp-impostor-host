@@ -16,12 +16,12 @@ export declare namespace Host {
 }
 
 export class Host {
-  private config: Host.Config;
-  private client: Client;
+  #config: Host.Config;
+  #client: Client;
 
   constructor(config: Host.Config) {
-    this.config = config;
-    this.client = new Client(
+    this.#config = config;
+    this.#client = new Client(
       {
         name: "@apollo/mcp-impostor-host",
         version: pkg.version,
@@ -32,23 +32,23 @@ export class Host {
 
   async connect(options: Host.ConnectOptions) {
     const transport = new StreamableHTTPClientTransport(new URL(options.url));
-    await this.client.connect(transport);
+    await this.#client.connect(transport);
 
     const [tools, resources] = await Promise.all([
       this.#fetchAllTools(),
       this.#fetchAllResources(),
     ]);
 
-    return new HostConnection(this.client, {
+    return new HostConnection(this.#client, {
       tools,
       resources,
-      sandbox: this.config.sandbox,
+      sandbox: this.#config.sandbox,
     });
   }
 
   async #fetchAllTools() {
     const fetchTools = async (cursor?: string): Promise<Tool[]> => {
-      const { tools, nextCursor } = await this.client.listTools({ cursor });
+      const { tools, nextCursor } = await this.#client.listTools({ cursor });
 
       return nextCursor ? tools.concat(await fetchTools(nextCursor)) : tools;
     };
@@ -58,7 +58,7 @@ export class Host {
 
   async #fetchAllResources() {
     const fetchResources = async (cursor?: string): Promise<Resource[]> => {
-      const { resources, nextCursor } = await this.client.listResources({
+      const { resources, nextCursor } = await this.#client.listResources({
         cursor,
       });
 
