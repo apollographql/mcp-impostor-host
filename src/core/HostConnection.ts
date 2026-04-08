@@ -6,7 +6,12 @@ import {
   type McpUiResourcePermissions,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { Client } from "@modelcontextprotocol/sdk/client";
-import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
+import type {
+  Resource,
+  Tool,
+  CallToolResult as SdkCallToolResult,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types";
 import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
 
 export declare namespace HostConnection {
@@ -17,8 +22,8 @@ export declare namespace HostConnection {
   }
 
   export interface CallToolResult {
-    toolResult: Awaited<ReturnType<typeof Client.prototype.callTool>>;
-    toolInput: Record<string, any> | undefined;
+    result: SdkCallToolResult;
+    input: Record<string, any> | undefined;
     uiResource?: HostConnection.UiResource;
   }
 
@@ -78,6 +83,11 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
 
     const resourceUri = getToolUiResourceUri(tool);
 
+    const resultPromise = this.#client.callTool({
+      name,
+      arguments: args,
+    }) as Promise<SdkCallToolResult>;
+
     if (!resourceUri || !resourceUri.startsWith("ui://")) {
       if (!resourceUri?.startsWith("ui://")) {
         this.#logger.warn(
@@ -85,18 +95,15 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
         );
       }
 
-      return {
-        toolResult: await this.#client.callTool({ name, arguments: args }),
-        toolInput: args,
-      };
+      return { result: await resultPromise, input: args };
     }
 
-    const [toolResult, uiResource] = await Promise.all([
-      this.#client.callTool({ name, arguments: args }),
+    const [result, uiResource] = await Promise.all([
+      resultPromise,
       this.#getUiResource(resourceUri),
     ]);
 
-    return { toolResult, toolInput: args, uiResource };
+    return { result, input: args, uiResource };
   }
 
   async close() {
