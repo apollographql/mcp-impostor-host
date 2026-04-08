@@ -75,7 +75,7 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
     if (!resourceUri || !resourceUri.startsWith("ui://")) {
       if (!resourceUri?.startsWith("ui://")) {
         this.#logger.warn(
-          `The MCP server returned a 'resourceUri' that was not a UI resource. Got: '${resourceUri}'`,
+          `The MCP server returned a 'resourceUri' that was not a UI resource. This resource is ignored. Got: '${resourceUri}'`,
         );
       }
 
