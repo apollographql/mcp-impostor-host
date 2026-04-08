@@ -12,7 +12,6 @@ import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
 export declare namespace HostConnection {
   export interface SandboxConfig {
     url: string;
-    selector?: Element;
   }
 
   export interface Options {
@@ -40,17 +39,18 @@ export declare namespace HostConnection {
 }
 
 export class HostConnection extends TypedEventTarget<HostConnection.Event> {
-  private client: Client;
+  #client: Client;
   private toolsByName = new Map<string, Tool>();
   private resourcesByUri = new Map<string, Resource>();
-  private sandbox: HostConnection.SandboxConfig;
+  #sandbox: HostConnection.SandboxConfig;
 
   #logger: Logger;
+  #closed = false;
 
   constructor(client: Client, options: HostConnection.Options) {
     super();
-    this.client = client;
-    this.sandbox = options.sandbox;
+    this.#client = client;
+    this.#sandbox = options.sandbox;
     this.#logger = options.logger;
 
     for (const tool of options.tools) {
@@ -60,6 +60,19 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
     for (const resource of options.resources) {
       this.resourcesByUri.set(resource.uri, resource);
     }
+  }
+
+  /** @internal */
+  get client() {
+    return this.#client;
+  }
+
+  get closed() {
+    return this.#closed;
+  }
+
+  getSandboxConfig() {
+    return this.#sandbox;
   }
 
   async callTool(
@@ -80,18 +93,13 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
       }
 
       return {
-        toolResult: await this.client.callTool({ name, arguments: args }),
+        toolResult: await this.#client.callTool({ name, arguments: args }),
         toolInput: args,
       };
     }
 
-    invariant(
-      resourceUri && this.sandbox.url,
-      "A sandbox url must be configured.",
-    );
-
     const [toolResult, uiResource] = await Promise.all([
-      this.client.callTool({ name, arguments: args }),
+      this.#client.callTool({ name, arguments: args }),
       this.#getUiResource(resourceUri),
     ]);
 
@@ -99,12 +107,13 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
   }
 
   async close() {
-    await this.client.close();
+    await this.#client.close();
+    this.#closed = true;
     this.dispatchTypedEvent("close", new CustomEvent("close"));
   }
 
   async #getUiResource(uri: string): Promise<HostConnection.UiResource> {
-    const resource = await this.client.readResource({ uri });
+    const resource = await this.#client.readResource({ uri });
 
     invariant(resource, `Resource not found: '${uri}'.`);
     invariant(
