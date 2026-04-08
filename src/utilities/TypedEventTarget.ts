@@ -34,10 +34,7 @@ export interface TypedEventTarget<TEventMap extends TypedEventMap<TEventMap>> {
 export class TypedEventTarget<
   TEventMap extends TypedEventMap<TEventMap>,
 > extends EventTarget {
-  dispatchTypedEvent<TName extends keyof TEventMap>(
-    _name: TName,
-    event: TEventMap[TName],
-  ) {
+  dispatchTypedEvent<T extends keyof TEventMap>(_type: T, event: TEventMap[T]) {
     return super.dispatchEvent(event);
   }
 }
