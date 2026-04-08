@@ -7,7 +7,7 @@ import {
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { Client } from "@modelcontextprotocol/sdk/client";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
-import { invariant, Logger } from "../utilities/index.js";
+import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
 
 export declare namespace HostConnection {
   export interface SandboxConfig {
@@ -33,9 +33,13 @@ export declare namespace HostConnection {
     csp: McpUiResourceCsp | undefined;
     permissions: McpUiResourcePermissions | undefined;
   }
+
+  export interface Event {
+    close: CustomEvent<never>;
+  }
 }
 
-export class HostConnection {
+export class HostConnection extends TypedEventTarget<HostConnection.Event> {
   private client: Client;
   private toolsByName = new Map<string, Tool>();
   private resourcesByUri = new Map<string, Resource>();
@@ -44,6 +48,7 @@ export class HostConnection {
   #logger: Logger;
 
   constructor(client: Client, options: HostConnection.Options) {
+    super();
     this.client = client;
     this.sandbox = options.sandbox;
     this.#logger = options.logger;
@@ -91,6 +96,11 @@ export class HostConnection {
     ]);
 
     return { toolResult, toolInput: args, uiResource };
+  }
+
+  async close() {
+    await this.client.close();
+    this.dispatchTypedEvent("close", new CustomEvent("close"));
   }
 
   async #getUiResource(uri: string): Promise<HostConnection.UiResource> {
