@@ -73,10 +73,10 @@ export class HostConnection extends TypedEventTarget<HostConnection.Event> {
     return this.#logger;
   }
 
-  async callTool(
+  callTool(
     name: string,
     args?: Record<string, any>,
-  ): Promise<HostConnection.CallToolResult> {
+  ): HostConnection.CallToolResult {
     const tool = this.toolsByName.get(name);
 
     invariant(tool, `Tool not found: '${name}'.`);
