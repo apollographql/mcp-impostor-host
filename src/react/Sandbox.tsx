@@ -118,7 +118,12 @@ export function Sandbox({ url, connection, execution }: Sandbox.Props) {
     <iframe
       ref={refCallback}
       sandbox="allow-scripts allow-same-origin allow-forms"
-      style={{ border: "none", width: "100%", height: "100%" }}
+      style={{
+        border: "none",
+        width: "100dvw",
+        height: "100dvh",
+        backgroundColor: "transparent",
+      }}
     />
   ) : null;
 }
