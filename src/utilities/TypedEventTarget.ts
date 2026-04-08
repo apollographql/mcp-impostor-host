@@ -8,16 +8,22 @@ type TypedEventListenerOrEventListenerObject<TEvent extends Event> =
   | TypedEventListener<TEvent>
   | TypedEventListenerObject<TEvent>;
 
-export interface TypedEventTarget<TEventMap extends Record<string, Event>> {
-  addEventListener: <TName extends keyof TEventMap>(
-    name: TName,
-    callback: TypedEventListenerOrEventListenerObject<TEventMap[TName]> | null,
+// Ensures the event map is an object, but without requiring it to have an index
+// signature like `Record<string, Event>` would.
+type TypedEventMap<T> = {
+  [K in keyof T]: T[K];
+};
+
+export interface TypedEventTarget<TEventMap extends TypedEventMap<TEventMap>> {
+  addEventListener: <T extends keyof TEventMap & string>(
+    type: T,
+    callback: TypedEventListenerOrEventListenerObject<TEventMap[T]> | null,
     options?: AddEventListenerOptions | boolean,
   ) => void;
 
-  removeEventListener: <TName extends keyof TEventMap>(
-    name: TName,
-    callback: TypedEventListenerOrEventListenerObject<TEventMap[TName]> | null,
+  removeEventListener: <T extends keyof TEventMap & string>(
+    type: T,
+    callback: TypedEventListenerOrEventListenerObject<TEventMap[T]> | null,
     options?: EventListenerOptions | boolean,
   ) => void;
 
@@ -26,7 +32,7 @@ export interface TypedEventTarget<TEventMap extends Record<string, Event>> {
 }
 
 export class TypedEventTarget<
-  TEventMap extends Record<string, Event>,
+  TEventMap extends TypedEventMap<TEventMap>,
 > extends EventTarget {
   dipatchTypedEvent<TName extends keyof TEventMap>(
     _name: TName,
