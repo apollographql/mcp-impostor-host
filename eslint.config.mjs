@@ -56,4 +56,7 @@ export default defineConfig([
       "import/no-default-export": "error",
     },
   },
+  {
+    ignores: ["dist/**/*"],
+  },
 ]);
