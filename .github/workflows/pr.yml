@@ -106,7 +106,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Check types
+      - name: Run tests
         shell: bash
         run: npm test
 
