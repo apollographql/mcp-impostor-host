@@ -19,8 +19,9 @@
       "types": "./dist/playwright/index.d.ts",
       "default": "./dist/playwright/index.js"
     },
-    "./sandbox-server": {
-      "default": "./dist/sandbox-server.js"
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
     }
   },
   "scripts": {
