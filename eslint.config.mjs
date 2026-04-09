@@ -1,3 +1,4 @@
+/* eslint-disable import/no-default-export */
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import pluginImport from "eslint-plugin-import";
@@ -47,6 +48,8 @@ export default defineConfig([
           named: true,
         },
       ],
+      "import/newline-after-import": "warn",
+      "import/no-default-export": "error",
     },
   },
 ]);
