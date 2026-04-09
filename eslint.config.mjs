@@ -1,4 +1,3 @@
-/* eslint-disable import/no-default-export */
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import pluginImport from "eslint-plugin-import";
@@ -19,9 +18,14 @@ export default defineConfig([
   {
     rules: {
       "@typescript-eslint/no-namespace": "off",
-      "import/extensions": ["error", "always", { ignorePackages: true }],
       // This rule has too many false positives
       "import/no-unresolved": "off",
+    },
+  },
+  {
+    ignores: ["**/*.config.{ts,mjs}"],
+    rules: {
+      "import/extensions": ["error", "always", { ignorePackages: true }],
       "import/order": [
         "warn",
         {
