@@ -42,7 +42,8 @@
     "typecheck": "tsc --build tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "attw": "npm run build && attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16"
+    "attw": "npm run build && attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16",
+    "lint": "eslint src/"
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40.0",
@@ -62,11 +63,16 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
+    "@eslint/js": "^10.0.1",
     "@hono/mcp": "^0.2.5",
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "eslint": "^10.2.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "jiti": "^2.6.1",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
     "react": "^19.2.4",
@@ -74,6 +80,7 @@
     "rimraf": "^6.1.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.1",
     "vite": "^8.0.7",
     "vite-plugin-singlefile": "^2.3.2",
     "zod": "^4.3.6"
