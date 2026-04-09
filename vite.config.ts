@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
 export default defineConfig(({ mode }) => {
-  const input: Record<string, string> =
+  const input: Record<string, string> | null =
     mode === "harness" ?
       {
         harness: resolve(
@@ -11,7 +11,13 @@ export default defineConfig(({ mode }) => {
           "src/playwright/harness/harness.html",
         ),
       }
-    : { sandbox: resolve(import.meta.dirname, "src/sandbox/sandbox.html") };
+    : mode === "sandbox" ?
+      { sandbox: resolve(import.meta.dirname, "src/sandbox/sandbox.html") }
+    : null;
+
+  if (!input) {
+    throw new Error("Must set --mode");
+  }
 
   return {
     root: "src",
