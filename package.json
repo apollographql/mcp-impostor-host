@@ -7,6 +7,10 @@
   "bin": {
     "serve-impostor-host": "./bin/serve-impostor-host.js"
   },
+  "files": [
+    "dist",
+    "bin"
+  ],
   "imports": {
     "#package.json": "./package.json"
   },
