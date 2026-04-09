@@ -8,7 +8,7 @@
   "module": "dist/core/index.js",
   "types": "dist/core/index.d.ts",
   "bin": {
-    "serve-impostor-host": "./bin/serve-impostor-host.js"
+    "serve-impostor-host": "bin/serve-impostor-host.js"
   },
   "files": [
     "dist",
