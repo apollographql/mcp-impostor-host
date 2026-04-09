@@ -4,6 +4,9 @@
   "description": "A test host for MCP Apps — impersonates a real MCP Apps host (e.g. Claude Desktop) for end-to-end testing",
   "license": "MIT",
   "type": "module",
+  "main": "dist/core/index.js",
+  "module": "dist/core/index.js",
+  "types": "dist/core/index.d.ts",
   "bin": {
     "serve-impostor-host": "./bin/serve-impostor-host.js"
   },
