@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import {
   AppBridge,
   buildAllowAttribute,
@@ -6,8 +5,11 @@ import {
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import type { HostConnection } from "../core/index.js";
+import { useCallback } from "react";
+
 import pkg from "#package.json";
+
+import type { HostConnection } from "../core/index.js";
 import { invariant } from "../utilities/invariant.js";
 import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
@@ -114,18 +116,18 @@ export function Sandbox({ url, connection, execution }: Sandbox.Props) {
     [connection, execution, resourceUri, url],
   );
 
-  return hasUiResource ? (
-    <iframe
-      ref={refCallback}
-      sandbox="allow-scripts allow-same-origin allow-forms"
-      style={{
-        border: "none",
-        width: "100dvw",
-        height: "100dvh",
-        backgroundColor: "transparent",
-      }}
-    />
-  ) : null;
+  return hasUiResource ?
+      <iframe
+        ref={refCallback}
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        style={{
+          border: "none",
+          width: "100dvw",
+          height: "100dvh",
+          backgroundColor: "transparent",
+        }}
+      />
+    : null;
 }
 
 function getSandboxSrc(baseUrl: string, uiResource: HostConnection.UiResource) {
@@ -150,9 +152,12 @@ function waitForSandboxReady(iframe: HTMLIFrameElement): Promise<void> {
       cleanup();
     }
 
-    function handleMessage(event: MessageEvent<any>) {
+    function handleMessage(event: MessageEvent<unknown>) {
       if (
         event.source === iframe.contentWindow &&
+        event.data &&
+        typeof event.data === "object" &&
+        "method" in event.data &&
         event.data?.method === SANDBOX_PROXY_READY_METHOD
       ) {
         resolve();

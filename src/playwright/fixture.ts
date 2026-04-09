@@ -1,7 +1,8 @@
-import { test as base, type FrameLocator } from "@playwright/test";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
-import type { Host } from "../core/index.js";
+import { type FrameLocator, test as base } from "@playwright/test";
+
 import type { McpHost } from "./types.js";
+import type { Host } from "../core/index.js";
 
 declare global {
   interface Window {
@@ -58,6 +59,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
       },
     };
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(fixture);
 
     await page.evaluate(() => window.__mcpHost.teardown()).catch(() => {});

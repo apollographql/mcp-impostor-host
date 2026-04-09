@@ -1,9 +1,11 @@
-import { Client } from "@modelcontextprotocol/sdk/client";
 import { UI_EXTENSION_CAPABILITIES } from "@mcp-ui/client";
-import pkg from "#package.json" with { type: "json " };
-import { HostConnection } from "./HostConnection";
+import { Client } from "@modelcontextprotocol/sdk/client";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
+
+import pkg from "#package.json" with { type: "json " };
+
+import { HostConnection } from "./HostConnection.js";
 import { invariant, Logger } from "../utilities/index.js";
 
 export declare namespace Host {
@@ -77,8 +79,8 @@ export class Host {
         cursor,
       });
 
-      return nextCursor
-        ? resources.concat(await fetchResources(nextCursor))
+      return nextCursor ?
+          resources.concat(await fetchResources(nextCursor))
         : resources;
     };
 

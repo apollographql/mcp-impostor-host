@@ -1,5 +1,6 @@
-import { test } from "../src/playwright/index.js";
 import { expect } from "@playwright/test";
+
+import { test } from "../src/playwright/index.js";
 
 const MCP_URL = "http://localhost:3456/mcp";
 

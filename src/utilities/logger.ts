@@ -24,25 +24,25 @@ export class Logger {
     this.#level = LEVEL[options?.level ?? "info"];
   }
 
-  debug(...data: any[]) {
+  debug(...data: unknown[]) {
     if (this.#level <= LEVEL.debug) {
       console.debug(PREFIX, ...data);
     }
   }
 
-  info(...data: any[]) {
+  info(...data: unknown[]) {
     if (this.#level <= LEVEL.info) {
       console.log(PREFIX, ...data);
     }
   }
 
-  warn(...data: any[]) {
+  warn(...data: unknown[]) {
     if (this.#level <= LEVEL.warn) {
       console.warn(PREFIX, ...data);
     }
   }
 
-  error(...data: any[]) {
+  error(...data: unknown[]) {
     if (this.#level <= LEVEL.error) {
       console.error(PREFIX, ...data);
     }

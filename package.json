@@ -4,9 +4,16 @@
   "description": "A test host for MCP Apps — impersonates a real MCP Apps host (e.g. Claude Desktop) for end-to-end testing",
   "license": "MIT",
   "type": "module",
+  "main": "dist/core/index.js",
+  "module": "dist/core/index.js",
+  "types": "dist/core/index.d.ts",
   "bin": {
     "serve-impostor-host": "./bin/serve-impostor-host.js"
   },
+  "files": [
+    "dist",
+    "bin"
+  ],
   "imports": {
     "#package.json": "./package.json"
   },
@@ -19,15 +26,24 @@
       "types": "./dist/playwright/index.d.ts",
       "default": "./dist/playwright/index.js"
     },
-    "./sandbox-server": {
-      "default": "./dist/sandbox-server.js"
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
     }
   },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
-    "build": "tsc --build tsconfig.build.json && vite build && vite build --mode harness",
-    "test": "playwright test"
+    "build": "npm-run-all build:*",
+    "build:lib": "tsc --build tsconfig.build.json",
+    "build:harness": "vite build --mode harness",
+    "build:sandbox": "vite build --mode sandbox",
+    "test": "playwright test",
+    "typecheck": "tsc --build tsconfig.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "attw": "npm run build && attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16",
+    "lint": "eslint ."
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40.0",
@@ -46,17 +62,26 @@
     }
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@changesets/cli": "^2.30.0",
+    "@eslint/js": "^9.39.4",
     "@hono/mcp": "^0.2.5",
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "rimraf": "^6.1.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.1",
     "vite": "^8.0.7",
     "vite-plugin-singlefile": "^2.3.2",
     "zod": "^4.3.6"

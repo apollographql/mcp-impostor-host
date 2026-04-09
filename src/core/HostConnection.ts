@@ -1,15 +1,16 @@
 import {
-  RESOURCE_MIME_TYPE,
   type McpUiResourceCsp,
   type McpUiResourceMeta,
   type McpUiResourcePermissions,
+  RESOURCE_MIME_TYPE,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { Client } from "@modelcontextprotocol/sdk/client";
 import type {
+  CallToolResult,
   Resource,
   Tool,
-  CallToolResult,
 } from "@modelcontextprotocol/sdk/types";
+
 import { invariant, Logger, TypedEventTarget } from "../utilities/index.js";
 
 export declare namespace HostConnection {

@@ -1,14 +1,14 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPTransport } from "@hono/mcp";
+import { serve } from "@hono/node-server";
 import {
-  registerAppTool,
   registerAppResource,
+  registerAppTool,
   RESOURCE_MIME_TYPE,
 } from "@modelcontextprotocol/ext-apps/server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { z } from "zod";
 import { cors } from "hono/cors";
+import { z } from "zod";
 
 const port = parseInt(process.env["MOCK_SERVER_PORT"] ?? "3456", 10);
 
@@ -16,36 +16,34 @@ const port = parseInt(process.env["MOCK_SERVER_PORT"] ?? "3456", 10);
 // the response, then sends ui/notifications/initialized. This replaces
 // the full App SDK for these simple test views.
 const APP_INIT_SCRIPT = `
-(function() {
-  window.addEventListener("message", function(event) {
-    var data = event.data;
-    if (!data || !data.jsonrpc) return;
-    if (data.id === 1 && data.result) {
-      window.parent.postMessage({
-        jsonrpc: "2.0",
-        method: "ui/notifications/initialized",
-        params: {}
-      }, "*");
-    }
-    if (data.method === "ui/resource-teardown") {
-      window.parent.postMessage({
-        jsonrpc: "2.0",
-        id: data.id,
-        result: {}
-      }, "*");
-    }
-  });
-  window.parent.postMessage({
-    jsonrpc: "2.0",
-    id: 1,
-    method: "ui/initialize",
-    params: {
-      appInfo: { name: "test-app", version: "0.0.1" },
-      appCapabilities: {},
-      protocolVersion: "2026-01-26"
-    }
-  }, "*");
-})();
+window.addEventListener("message", function(event) {
+  const data = event.data;
+  if (!data || !data.jsonrpc) return;
+  if (data.id === 1 && data.result) {
+    window.parent.postMessage({
+      jsonrpc: "2.0",
+      method: "ui/notifications/initialized",
+      params: {}
+    }, "*");
+  }
+  if (data.method === "ui/resource-teardown") {
+    window.parent.postMessage({
+      jsonrpc: "2.0",
+      id: data.id,
+      result: {}
+    }, "*");
+  }
+});
+window.parent.postMessage({
+  jsonrpc: "2.0",
+  id: 1,
+  method: "ui/initialize",
+  params: {
+    appInfo: { name: "test-app", version: "0.0.1" },
+    appCapabilities: {},
+    protocolVersion: "2026-01-26"
+  }
+}, "*");
 `;
 
 const server = new McpServer({ name: "mock-server", version: "0.0.1" });
@@ -113,10 +111,10 @@ registerAppResource(
     <h1 id="greeting">Loading...</h1>
     <script>
       ${APP_INIT_SCRIPT}
-      window.addEventListener("message", function(event) {
-        var data = event.data;
+      window.addEventListener("message", (event) => {
+        const data = event.data;
         if (data && data.method === "ui/notifications/tool-input") {
-          var name = (data.params && data.params.arguments && data.params.arguments.name) || "stranger";
+          const name = (data.params && data.params.arguments && data.params.arguments.name) || "stranger";
           document.getElementById("greeting").textContent = "Hello, " + name + "!";
         }
       });
