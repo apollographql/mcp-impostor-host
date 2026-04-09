@@ -1,6 +1,6 @@
 {
   "name": "@apollo/mcp-impostor-host",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A test host for MCP Apps — impersonates a real MCP Apps host (e.g. Claude Desktop) for end-to-end testing",
   "license": "MIT",
   "type": "module",
