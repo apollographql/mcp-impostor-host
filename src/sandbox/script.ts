@@ -1,10 +1,11 @@
 import {
   buildAllowAttribute,
+  type McpUiResourceCsp,
   McpUiSandboxResourceReadyNotificationSchema,
   SANDBOX_PROXY_READY_METHOD,
   SANDBOX_RESOURCE_READY_METHOD,
-  type McpUiResourceCsp,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
+
 import { DEFAULT_CSP } from "../utilities/index.js";
 
 if (window.self === window.top) {

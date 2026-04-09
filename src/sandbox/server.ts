@@ -1,9 +1,11 @@
-import type { McpUiResourceCsp } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { Hono } from "hono";
-import { serve } from "@hono/node-server";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { serve } from "@hono/node-server";
+import type { McpUiResourceCsp } from "@modelcontextprotocol/ext-apps/app-bridge";
+import { Hono } from "hono";
+
 import { DEFAULT_CSP } from "../utilities/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

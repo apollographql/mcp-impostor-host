@@ -1,5 +1,6 @@
-import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+
 import { Host, type HostConnection } from "../../core/index.js";
 import { Sandbox } from "../../react/index.js";
 import { invariant } from "../../utilities/index.js";

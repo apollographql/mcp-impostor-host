@@ -1,7 +1,8 @@
-import { test as base, type FrameLocator } from "@playwright/test";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
-import type { Host } from "../core/index.js";
+import { type FrameLocator, test as base } from "@playwright/test";
+
 import type { McpHost } from "./types.js";
+import type { Host } from "../core/index.js";
 
 declare global {
   interface Window {

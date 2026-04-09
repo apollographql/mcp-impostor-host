@@ -1,9 +1,9 @@
 import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import pluginImport from "eslint-plugin-import";
+import pluginReactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import pluginReactHooks from "eslint-plugin-react-hooks";
-import pluginImport from "eslint-plugin-import";
-import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   {
@@ -21,6 +21,32 @@ export default defineConfig([
       "import/extensions": ["error", "always", { ignorePackages: true }],
       // This rule has too many false positives
       "import/no-unresolved": "off",
+      "import/order": [
+        "warn",
+        {
+          "newlines-between": "always",
+          pathGroups: [
+            {
+              pattern: "#**",
+              group: "internal",
+              position: "before",
+            },
+          ],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            ["sibling", "parent"],
+            "index",
+          ],
+          alphabetize: {
+            order: "asc",
+            orderImportKind: "asc",
+            caseInsensitive: true,
+          },
+          named: true,
+        },
+      ],
     },
   },
 ]);

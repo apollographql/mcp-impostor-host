@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import {
   AppBridge,
   buildAllowAttribute,
@@ -6,8 +5,11 @@ import {
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import type { HostConnection } from "../core/index.js";
+import { useCallback } from "react";
+
 import pkg from "#package.json";
+
+import type { HostConnection } from "../core/index.js";
 import { invariant } from "../utilities/invariant.js";
 import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
