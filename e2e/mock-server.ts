@@ -17,7 +17,7 @@ const port = parseInt(process.env["MOCK_SERVER_PORT"] ?? "3456", 10);
 // the full App SDK for these simple test views.
 const APP_INIT_SCRIPT = `
 window.addEventListener("message", function(event) {
-  var data = event.data;
+  const data = event.data;
   if (!data || !data.jsonrpc) return;
   if (data.id === 1 && data.result) {
     window.parent.postMessage({
@@ -111,10 +111,10 @@ registerAppResource(
     <h1 id="greeting">Loading...</h1>
     <script>
       ${APP_INIT_SCRIPT}
-      window.addEventListener("message", function(event) {
-        var data = event.data;
+      window.addEventListener("message", (event) => {
+        const data = event.data;
         if (data && data.method === "ui/notifications/tool-input") {
-          var name = (data.params && data.params.arguments && data.params.arguments.name) || "stranger";
+          const name = (data.params && data.params.arguments && data.params.arguments.name) || "stranger";
           document.getElementById("greeting").textContent = "Hello, " + name + "!";
         }
       });
