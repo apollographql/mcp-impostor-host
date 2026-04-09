@@ -1,7 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { UI_EXTENSION_CAPABILITIES } from "@mcp-ui/client";
 import pkg from "#package.json" with { type: "json " };
-import { HostConnection } from "./HostConnection";
+import { HostConnection } from "./HostConnection.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
 import { invariant, Logger } from "../utilities/index.js";
