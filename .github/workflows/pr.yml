@@ -1,4 +1,4 @@
-name: Build on PR
+name: Pull request checks
 
 on:
   pull_request:
@@ -111,7 +111,6 @@ jobs:
         run: npm test
 
   arethetypeswrong:
-    name: Are the types wrong
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -134,7 +133,6 @@ jobs:
         run: npm run attw -- --format ascii > $GITHUB_STEP_SUMMARY
 
   changeset:
-    name: Check for changeset
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
