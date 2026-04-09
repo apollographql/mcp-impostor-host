@@ -150,9 +150,12 @@ function waitForSandboxReady(iframe: HTMLIFrameElement): Promise<void> {
       cleanup();
     }
 
-    function handleMessage(event: MessageEvent<any>) {
+    function handleMessage(event: MessageEvent<unknown>) {
       if (
         event.source === iframe.contentWindow &&
+        event.data &&
+        typeof event.data === "object" &&
+        "method" in event.data &&
         event.data?.method === SANDBOX_PROXY_READY_METHOD
       ) {
         resolve();

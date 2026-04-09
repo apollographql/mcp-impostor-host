@@ -58,6 +58,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
       },
     };
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(fixture);
 
     await page.evaluate(() => window.__mcpHost.teardown()).catch(() => {});

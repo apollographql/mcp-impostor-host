@@ -65,8 +65,8 @@ window.addEventListener("message", async (event) => {
       if (!result.success) {
         console.error(
           `[@apollo/mcp-impostor-host - Sandbox]: ${SANDBOX_RESOURCE_READY_METHOD} notification is malformed. Received:`,
+          event.data,
         );
-        event.data;
         return;
       }
 

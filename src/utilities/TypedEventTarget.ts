@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 type TypedEventListener<TEvent extends Event> = (event: TEvent) => void;
 
 interface TypedEventListenerObject<TEvent extends Event> {
