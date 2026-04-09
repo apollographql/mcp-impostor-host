@@ -13,4 +13,9 @@ export default defineConfig([
   },
   tseslint.configs.recommended,
   pluginReactHooks.configs.flat.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-namespace": "off",
+    },
+  },
 ]);
