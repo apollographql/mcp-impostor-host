@@ -77,8 +77,8 @@ export class Host {
         cursor,
       });
 
-      return nextCursor
-        ? resources.concat(await fetchResources(nextCursor))
+      return nextCursor ?
+          resources.concat(await fetchResources(nextCursor))
         : resources;
     };
 

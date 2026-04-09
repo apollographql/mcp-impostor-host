@@ -29,9 +29,9 @@ function buildCspHeader(csp: McpUiResourceCsp): string {
     `img-src 'self' data: ${resourceDomains || ""}`,
     `font-src 'self' ${resourceDomains || ""}`,
     `media-src 'self' data: ${resourceDomains || ""}`,
-    connectDomains
-      ? `connect-src 'self' ${connectDomains}`
-      : "connect-src 'none'",
+    connectDomains ?
+      `connect-src 'self' ${connectDomains}`
+    : "connect-src 'none'",
     `frame-src ${frameDomains || "'none'"}`,
     "object-src 'none'",
     `base-uri ${baseUriDomains || "'self'"}`,

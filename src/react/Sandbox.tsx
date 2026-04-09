@@ -114,18 +114,18 @@ export function Sandbox({ url, connection, execution }: Sandbox.Props) {
     [connection, execution, resourceUri, url],
   );
 
-  return hasUiResource ? (
-    <iframe
-      ref={refCallback}
-      sandbox="allow-scripts allow-same-origin allow-forms"
-      style={{
-        border: "none",
-        width: "100dvw",
-        height: "100dvh",
-        backgroundColor: "transparent",
-      }}
-    />
-  ) : null;
+  return hasUiResource ?
+      <iframe
+        ref={refCallback}
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        style={{
+          border: "none",
+          width: "100dvw",
+          height: "100dvh",
+          backgroundColor: "transparent",
+        }}
+      />
+    : null;
 }
 
 function getSandboxSrc(baseUrl: string, uiResource: HostConnection.UiResource) {

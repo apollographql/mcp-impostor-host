@@ -1,38 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <title>MCP Impostor Host - Sandbox</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        /* Transparent background allows parent page to show through */
+        background-color: transparent;
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="color-scheme" content="light dark" />
-  <title>MCP Impostor Host - Sandbox</title>
-  <style>
-    html,
-    body {
-      margin: 0;
-      height: 100vh;
-      width: 100vw;
-      /* Transparent background allows parent page to show through */
-      background-color: transparent;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    * {
-      box-sizing: border-box;
-    }
+      iframe {
+        background-color: transparent;
+        border: 0px none transparent;
+        padding: 0px;
+        overflow: hidden;
+        flex-grow: 1;
+        color-scheme: inherit;
+      }
+    </style>
+  </head>
 
-    iframe {
-      background-color: transparent;
-      border: 0px none transparent;
-      padding: 0px;
-      overflow: hidden;
-      flex-grow: 1;
-      color-scheme: inherit;
-    }
-  </style>
-</head>
-
-
-<body>
-  <script type="module" src="./script.ts"></script>
-</body>
-
+  <body>
+    <script type="module" src="./script.ts"></script>
+  </body>
 </html>
