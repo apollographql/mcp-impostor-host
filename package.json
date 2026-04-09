@@ -43,7 +43,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "attw": "npm run build && attw --pack . --ignore-rules cjs-resolves-to-esm --profile node16",
-    "lint": "eslint src/"
+    "lint": "eslint ."
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40.0",

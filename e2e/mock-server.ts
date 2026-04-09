@@ -1,14 +1,14 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPTransport } from "@hono/mcp";
+import { serve } from "@hono/node-server";
 import {
-  registerAppTool,
   registerAppResource,
+  registerAppTool,
   RESOURCE_MIME_TYPE,
 } from "@modelcontextprotocol/ext-apps/server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { z } from "zod";
 import { cors } from "hono/cors";
+import { z } from "zod";
 
 const port = parseInt(process.env["MOCK_SERVER_PORT"] ?? "3456", 10);
 
