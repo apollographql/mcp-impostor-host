@@ -16,36 +16,34 @@ const port = parseInt(process.env["MOCK_SERVER_PORT"] ?? "3456", 10);
 // the response, then sends ui/notifications/initialized. This replaces
 // the full App SDK for these simple test views.
 const APP_INIT_SCRIPT = `
-(function() {
-  window.addEventListener("message", function(event) {
-    var data = event.data;
-    if (!data || !data.jsonrpc) return;
-    if (data.id === 1 && data.result) {
-      window.parent.postMessage({
-        jsonrpc: "2.0",
-        method: "ui/notifications/initialized",
-        params: {}
-      }, "*");
-    }
-    if (data.method === "ui/resource-teardown") {
-      window.parent.postMessage({
-        jsonrpc: "2.0",
-        id: data.id,
-        result: {}
-      }, "*");
-    }
-  });
-  window.parent.postMessage({
-    jsonrpc: "2.0",
-    id: 1,
-    method: "ui/initialize",
-    params: {
-      appInfo: { name: "test-app", version: "0.0.1" },
-      appCapabilities: {},
-      protocolVersion: "2026-01-26"
-    }
-  }, "*");
-})();
+window.addEventListener("message", function(event) {
+  var data = event.data;
+  if (!data || !data.jsonrpc) return;
+  if (data.id === 1 && data.result) {
+    window.parent.postMessage({
+      jsonrpc: "2.0",
+      method: "ui/notifications/initialized",
+      params: {}
+    }, "*");
+  }
+  if (data.method === "ui/resource-teardown") {
+    window.parent.postMessage({
+      jsonrpc: "2.0",
+      id: data.id,
+      result: {}
+    }, "*");
+  }
+});
+window.parent.postMessage({
+  jsonrpc: "2.0",
+  id: 1,
+  method: "ui/initialize",
+  params: {
+    appInfo: { name: "test-app", version: "0.0.1" },
+    appCapabilities: {},
+    protocolVersion: "2026-01-26"
+  }
+}, "*");
 `;
 
 const server = new McpServer({ name: "mock-server", version: "0.0.1" });
