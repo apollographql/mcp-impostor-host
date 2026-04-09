@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24.x"
+          node-version: 24.x
           cache: npm
 
       - name: Install dependencies
@@ -24,103 +24,108 @@ jobs:
       - name: Run build
         run: npm run build
 
-  # typecheck:
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: 24.x
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Check types
-  #       shell: bash
-  #       run: npm run typecheck
-  #
-  # lint:
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: 24.x
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Lint
-  #       shell: bash
-  #       run: npm run lint
-  #
-  # check-formatting:
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: 24.x
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Check formatting
-  #       shell: bash
-  #       run: npm run format:check
-  #
-  # test:
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: 24.x
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Build
-  #       run: npm run build
-  #
-  #     - name: Check types
-  #       shell: bash
-  #       run: npm test
-  #
-  # arethetypeswrong:
-  #   name: Are the types wrong
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repo
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v6
-  #       with:
-  #         node-version: 24.x
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run build
-  #       run: npm run build
-  #
-  #     - name: Run AreTheTypesWrong
-  #       id: attw
-  #       run: npm run attw -- --format ascii > $GITHUB_STEP_SUMMARY
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check types
+        shell: bash
+        run: npm run typecheck
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        shell: bash
+        run: npm run lint
+
+  check-formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        shell: bash
+        run: npm run format:check
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check types
+        shell: bash
+        run: npm test
+
+  arethetypeswrong:
+    name: Are the types wrong
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build
+        run: npm run build
+
+      - name: Run AreTheTypesWrong
+        id: attw
+        run: npm run attw -- --format ascii > $GITHUB_STEP_SUMMARY
