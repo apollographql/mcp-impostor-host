@@ -28,8 +28,8 @@ export interface McpHostConnection {
     name: string,
     args?: Record<string, unknown>,
   ): Promise<CallToolResponse>;
-  readonly messages: ReadonlyArray<McpUiMessageRequest["params"]>;
-  waitForMessage(options?: {
+  readonly messageRequests: ReadonlyArray<McpUiMessageRequest["params"]>;
+  waitForMessageRequest(options?: {
     /**
      * Amount of time in milliseconds before the call times out.
      *
@@ -56,7 +56,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
   mcpHost: async ({ page }, use) => {
     await page.goto(DEFAULT_HARNESS_URL);
 
-    const messages: McpUiMessageRequest["params"][] = [];
+    const messageRequests: McpUiMessageRequest["params"][] = [];
     let controller: ReadableStreamDefaultController<
       McpUiMessageRequest["params"]
     >;
@@ -85,7 +85,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
     await page.exposeFunction(
       "__playwrightPushMessage",
       (params: McpUiMessageRequest["params"]) => {
-        messages.push(params);
+        messageRequests.push(params);
         controller.enqueue(params);
       },
     );
@@ -121,11 +121,11 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
             return { ...response, appFrame };
           },
 
-          get messages() {
-            return messages;
+          get messageRequests() {
+            return messageRequests;
           },
 
-          waitForMessage(options) {
+          waitForMessageRequest(options) {
             let timer: ReturnType<typeof setTimeout>;
 
             return Promise.race([
@@ -140,7 +140,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
                   () =>
                     reject(
                       new Error(
-                        `[@apollo/mcp-impostor-host:playwright] Timeout waiting for message.`,
+                        `[@apollo/mcp-impostor-host:playwright] Timeout waiting for message request.`,
                       ),
                     ),
                   timeout,
