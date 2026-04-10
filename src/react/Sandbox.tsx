@@ -19,7 +19,7 @@ export declare namespace Sandbox {
     connection: HostConnection | null;
     execution: HostConnection.ToolExecution | null;
     url: string;
-    onMessage?: (message: McpUiMessageRequest["params"]) => void;
+    onMessage?: (params: McpUiMessageRequest["params"]) => void;
   }
 }
 
