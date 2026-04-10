@@ -2,10 +2,12 @@ import {
   AppBridge,
   buildAllowAttribute,
   getToolUiResourceUri,
+  type McpUiMessageRequest,
+  type McpUiOpenLinkRequest,
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 
 import pkg from "#package.json";
 
@@ -18,12 +20,27 @@ export declare namespace Sandbox {
     connection: HostConnection | null;
     execution: HostConnection.ToolExecution | null;
     url: string;
+    onMessage?: (params: McpUiMessageRequest["params"]) => void;
+    onOpenLink?: (params: McpUiOpenLinkRequest["params"]) => void;
   }
 }
 
-export function Sandbox({ url, connection, execution }: Sandbox.Props) {
+export function Sandbox({
+  url,
+  connection,
+  execution,
+  onMessage,
+  onOpenLink,
+}: Sandbox.Props) {
   const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
   const hasUiResource = !!(connection && execution && resourceUri);
+  const onMessageRef = useRef(onMessage);
+  const onOpenLinkRef = useRef(onOpenLink);
+
+  useLayoutEffect(() => {
+    onMessageRef.current = onMessage;
+    onOpenLinkRef.current = onOpenLink;
+  });
 
   const refCallback = useCallback(
     (iframe: HTMLIFrameElement) => {
@@ -71,6 +88,8 @@ export function Sandbox({ url, connection, execution }: Sandbox.Props) {
             {
               serverTools: capabilities?.tools,
               serverResources: capabilities?.resources,
+              message: {},
+              openLinks: {},
             },
             {
               hostContext: {
@@ -84,6 +103,16 @@ export function Sandbox({ url, connection, execution }: Sandbox.Props) {
           bridge.oninitialized = () => {
             initialized = true;
             init.resolve();
+          };
+
+          bridge.onmessage = async (params) => {
+            onMessageRef.current?.(params);
+            return {};
+          };
+
+          bridge.onopenlink = async (params) => {
+            onOpenLinkRef.current?.(params);
+            return {};
           };
 
           await bridge.connect(
