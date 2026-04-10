@@ -27,6 +27,11 @@ export interface McpHostConnection {
   ): Promise<CallToolResponse>;
   readonly messages: ReadonlyArray<McpUiMessageRequest["params"]>;
   waitForMessage(options?: {
+    /**
+     * Amount of time in milliseconds before the call times out.
+     *
+     * @default 5000
+     */
     timeout?: number;
   }): Promise<McpUiMessageRequest["params"]>;
 }
