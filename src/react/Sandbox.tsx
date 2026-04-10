@@ -3,6 +3,7 @@ import {
   buildAllowAttribute,
   getToolUiResourceUri,
   type McpUiMessageRequest,
+  type McpUiOpenLinkRequest,
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
@@ -20,6 +21,7 @@ export declare namespace Sandbox {
     execution: HostConnection.ToolExecution | null;
     url: string;
     onMessage?: (params: McpUiMessageRequest["params"]) => void;
+    onOpenLink?: (params: McpUiOpenLinkRequest["params"]) => void;
   }
 }
 
@@ -28,13 +30,16 @@ export function Sandbox({
   connection,
   execution,
   onMessage,
+  onOpenLink,
 }: Sandbox.Props) {
   const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
   const hasUiResource = !!(connection && execution && resourceUri);
   const onMessageRef = useRef(onMessage);
+  const onOpenLinkRef = useRef(onOpenLink);
 
   useLayoutEffect(() => {
     onMessageRef.current = onMessage;
+    onOpenLinkRef.current = onOpenLink;
   });
 
   const refCallback = useCallback(
@@ -84,6 +89,7 @@ export function Sandbox({
               serverTools: capabilities?.tools,
               serverResources: capabilities?.resources,
               message: {},
+              openLinks: {},
             },
             {
               hostContext: {
@@ -101,6 +107,11 @@ export function Sandbox({
 
           bridge.onmessage = async (params) => {
             onMessageRef.current?.(params);
+            return {};
+          };
+
+          bridge.onopenlink = async (params) => {
+            onOpenLinkRef.current?.(params);
             return {};
           };
 
