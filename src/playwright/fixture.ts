@@ -107,7 +107,7 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
                   () =>
                     reject(
                       new Error(
-                        `Expected to receive a message within ${timeout}ms`,
+                        `[@apollo/mcp-impostor-host:playwright] Timeout waiting for message.`,
                       ),
                     ),
                   timeout,
