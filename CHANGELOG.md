@@ -1,5 +1,11 @@
 # @apollo/mcp-impostor-host
 
+## 0.2.1
+
+### Patch Changes
+
+- [#30](https://github.com/apollographql/mcp-impostor-host/pull/30) [`eef87a3`](https://github.com/apollographql/mcp-impostor-host/commit/eef87a3fe434a9ff2e590d02369796eb4bc88e17) Thanks [@jerelmiller](https://github.com/jerelmiller)! - Add a README with installation and usage instructions.
+
 ## 0.2.0
 
 ### Minor Changes
