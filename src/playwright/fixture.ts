@@ -1,4 +1,7 @@
-import type { McpUiMessageRequest } from "@modelcontextprotocol/ext-apps/app-bridge";
+import type {
+  McpUiMessageRequest,
+  McpUiOpenLinkRequest,
+} from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { type FrameLocator, test as base } from "@playwright/test";
 
@@ -34,6 +37,15 @@ export interface McpHostConnection {
      */
     timeout?: number;
   }): Promise<McpUiMessageRequest["params"]>;
+  readonly openLinkRequests: ReadonlyArray<McpUiOpenLinkRequest["params"]>;
+  waitForOpenLinkRequest(options?: {
+    /**
+     * Amount of time in milliseconds before the call times out.
+     *
+     * @default 5000
+     */
+    timeout?: number;
+  }): Promise<McpUiOpenLinkRequest["params"]>;
 }
 
 export interface McpHostFixture {
@@ -57,11 +69,32 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
 
     const reader = stream.getReader();
 
+    const openLinkRequests: McpUiOpenLinkRequest["params"][] = [];
+    let openLinkController: ReadableStreamDefaultController<
+      McpUiOpenLinkRequest["params"]
+    >;
+
+    const openLinkStream = new ReadableStream<McpUiOpenLinkRequest["params"]>({
+      start(c) {
+        openLinkController = c;
+      },
+    });
+
+    const openLinkReader = openLinkStream.getReader();
+
     await page.exposeFunction(
       "__playwrightPushMessage",
       (params: McpUiMessageRequest["params"]) => {
         messages.push(params);
         controller.enqueue(params);
+      },
+    );
+
+    await page.exposeFunction(
+      "__playwrightSendOpenLinkRequest",
+      (params: McpUiOpenLinkRequest["params"]) => {
+        openLinkRequests.push(params);
+        openLinkController.enqueue(params);
       },
     );
 
@@ -108,6 +141,34 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
                     reject(
                       new Error(
                         `[@apollo/mcp-impostor-host:playwright] Timeout waiting for message.`,
+                      ),
+                    ),
+                  timeout,
+                );
+              }),
+            ]);
+          },
+
+          get openLinkRequests() {
+            return openLinkRequests;
+          },
+
+          waitForOpenLinkRequest(options) {
+            let timer: ReturnType<typeof setTimeout>;
+
+            return Promise.race([
+              openLinkReader.read().then(({ value }) => {
+                clearTimeout(timer);
+                return value!;
+              }),
+              new Promise<never>((_, reject) => {
+                const timeout = options?.timeout ?? DEFAULT_MESSAGE_TIMEOUT;
+
+                timer = setTimeout(
+                  () =>
+                    reject(
+                      new Error(
+                        `[@apollo/mcp-impostor-host:playwright] Timeout waiting for open link request.`,
                       ),
                     ),
                   timeout,

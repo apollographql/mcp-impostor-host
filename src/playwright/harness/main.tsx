@@ -1,4 +1,7 @@
-import type { McpUiMessageRequest } from "@modelcontextprotocol/ext-apps";
+import type {
+  McpUiMessageRequest,
+  McpUiOpenLinkRequest,
+} from "@modelcontextprotocol/ext-apps";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -15,6 +18,9 @@ declare global {
   interface Window {
     __mcpHost: McpHost;
     __playwrightPushMessage: (params: McpUiMessageRequest["params"]) => void;
+    __playwrightSendOpenLinkRequest: (
+      params: McpUiOpenLinkRequest["params"],
+    ) => void;
   }
 }
 
@@ -61,6 +67,7 @@ function Harness() {
       execution={execution}
       url={SANDBOX_URL}
       onMessage={(params) => window.__playwrightPushMessage(params)}
+      onOpenLink={(params) => window.__playwrightSendOpenLinkRequest(params)}
     />
   );
 }
