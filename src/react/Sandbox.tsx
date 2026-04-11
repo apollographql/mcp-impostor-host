@@ -94,6 +94,9 @@ export function Sandbox({
             {
               hostContext: {
                 platform: "web",
+                toolInfo: {
+                  tool: execution.tool,
+                },
               },
             },
           );
