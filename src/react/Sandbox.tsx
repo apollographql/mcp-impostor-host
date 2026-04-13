@@ -17,7 +17,7 @@ import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
 export declare namespace Sandbox {
   export interface Props {
-    connection: HostConnection | null;
+    connection: HostConnection;
     execution: HostConnection.ToolExecution | null;
     url: string;
     onMessage?: (params: McpUiMessageRequest["params"]) => void;
