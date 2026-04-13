@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Host, type HostConnection } from "../../core/index.js";
-import { Sandbox } from "../../react/index.js";
+import { Sandbox, useHostContext } from "../../react/index.js";
 import { invariant } from "../../utilities/index.js";
 import type { McpHost } from "../types.js";
 
@@ -25,6 +25,7 @@ declare global {
 }
 
 function Harness() {
+  const [hostContext, setHostContext] = useHostContext();
   const [host] = useState(() => new Host());
   const [connection, setConnection] = useState<HostConnection | null>(null);
   const [execution, setExecution] =
@@ -35,6 +36,8 @@ function Harness() {
       async connect(url) {
         setConnection(await host.connect({ url }));
       },
+
+      setHostContext: setHostContext,
 
       async callTool(name, args) {
         invariant(
@@ -59,17 +62,18 @@ function Harness() {
         }
       },
     };
-  }, [host, connection]);
+  }, [host, connection, setHostContext]);
 
-  return (
-    <Sandbox
-      connection={connection}
-      execution={execution}
-      url={SANDBOX_URL}
-      onMessage={(params) => window.__playwrightPushMessage(params)}
-      onOpenLink={(params) => window.__playwrightSendOpenLinkRequest(params)}
-    />
-  );
+  return connection ?
+      <Sandbox
+        connection={connection}
+        execution={execution}
+        hostContext={hostContext}
+        url={SANDBOX_URL}
+        onMessage={(params) => window.__playwrightPushMessage(params)}
+        onOpenLink={(params) => window.__playwrightSendOpenLinkRequest(params)}
+      />
+    : null;
 }
 
 createRoot(document.getElementById("root")!).render(<Harness />);
