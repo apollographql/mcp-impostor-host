@@ -2,16 +2,19 @@ import {
   AppBridge,
   buildAllowAttribute,
   getToolUiResourceUri,
+  type McpUiHostContext,
   type McpUiMessageRequest,
   type McpUiOpenLinkRequest,
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import type { Tool } from "@modelcontextprotocol/sdk/types";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 import pkg from "#package.json";
 
 import type { HostConnection } from "../core/index.js";
+import type { SandboxHostContext } from "./hooks/useHostContext.js";
 import { invariant } from "../utilities/invariant.js";
 import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
@@ -19,46 +22,76 @@ export declare namespace Sandbox {
   export interface Props {
     connection: HostConnection;
     execution: HostConnection.ToolExecution | null;
+    hostContext?: SandboxHostContext;
     url: string;
     onMessage?: (params: McpUiMessageRequest["params"]) => void;
     onOpenLink?: (params: McpUiOpenLinkRequest["params"]) => void;
   }
 }
 
+function mergeHostContext(
+  hostContext: SandboxHostContext | undefined,
+  tool: Tool,
+): McpUiHostContext {
+  return {
+    ...hostContext,
+    platform: "web",
+    userAgent: pkg.name,
+    toolInfo: {
+      tool,
+    },
+  };
+}
+
 export function Sandbox({
   url,
   connection,
   execution,
+  hostContext,
   onMessage,
   onOpenLink,
 }: Sandbox.Props) {
   const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
-  const hasUiResource = !!(connection && execution && resourceUri);
+  const hasUiResource = !!(execution && resourceUri);
   const onMessageRef = useRef(onMessage);
   const onOpenLinkRef = useRef(onOpenLink);
+  const bridgeRef = useRef<AppBridge | null>(null);
+
+  // Keep track of hostContext in a ref so that we avoid tearing down/recreating
+  // the ref callback anytime we get a new hostContext object
+  const hostContextRef = useRef(hostContext);
 
   useLayoutEffect(() => {
     onMessageRef.current = onMessage;
     onOpenLinkRef.current = onOpenLink;
+    hostContextRef.current = hostContext;
   });
+
+  useEffect(() => {
+    if (bridgeRef.current && execution?.tool) {
+      bridgeRef.current.setHostContext(
+        mergeHostContext(hostContext, execution.tool),
+      );
+    }
+  }, [hostContext, execution?.tool]);
 
   const refCallback = useCallback(
     (iframe: HTMLIFrameElement) => {
-      if (!connection || !execution || !resourceUri) return;
+      if (!execution || !resourceUri) return;
 
       invariant(!connection.closed, "The connection is already closed.");
 
       let initialized = false;
       let mounted = true;
-      let bridge: AppBridge | undefined;
 
       function close() {
         mounted = false;
         if (initialized) {
-          bridge?.teardownResource({}).catch(() => {});
+          bridgeRef.current?.teardownResource({}).catch(() => {});
         }
 
-        bridge?.close();
+        bridgeRef.current?.close();
+        bridgeRef.current = null;
       }
 
       connection.addEventListener("close", close);
@@ -80,9 +113,9 @@ export function Sandbox({
 
           await waitForSandboxReady(iframe);
 
-          bridge = new AppBridge(
+          const bridge = new AppBridge(
             connection.client,
-            { name: "@apollo/mcp-impostor-host", version: pkg.version },
+            { name: pkg.name, version: pkg.version },
             {
               serverTools: {},
               serverResources: {},
@@ -90,14 +123,14 @@ export function Sandbox({
               openLinks: {},
             },
             {
-              hostContext: {
-                platform: "web",
-                toolInfo: {
-                  tool: execution.tool,
-                },
-              },
+              hostContext: mergeHostContext(
+                hostContextRef.current,
+                execution.tool,
+              ),
             },
           );
+
+          bridgeRef.current = bridge;
 
           const init = promiseWithResolvers<void>();
 
