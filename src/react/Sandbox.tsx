@@ -80,14 +80,12 @@ export function Sandbox({
 
           await waitForSandboxReady(iframe);
 
-          const capabilities = connection.client.getServerCapabilities();
-
           bridge = new AppBridge(
             connection.client,
             { name: "@apollo/mcp-impostor-host", version: pkg.version },
             {
-              serverTools: capabilities?.tools,
-              serverResources: capabilities?.resources,
+              serverTools: {},
+              serverResources: {},
               message: {},
               openLinks: {},
             },
