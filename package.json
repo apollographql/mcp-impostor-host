@@ -17,6 +17,10 @@
   "imports": {
     "#package.json": "./package.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apollographql/mcp-impostor-host.git"
+  },
   "exports": {
     ".": {
       "types": "./dist/core/index.d.ts",
