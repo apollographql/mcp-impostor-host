@@ -2,63 +2,94 @@ import {
   AppBridge,
   buildAllowAttribute,
   getToolUiResourceUri,
+  type McpUiHostContext,
   type McpUiMessageRequest,
   type McpUiOpenLinkRequest,
   PostMessageTransport,
   SANDBOX_PROXY_READY_METHOD,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import type { Tool } from "@modelcontextprotocol/sdk/types";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 import pkg from "#package.json";
 
 import type { HostConnection } from "../core/index.js";
+import type { SandboxHostContext } from "./hooks/useHostContext.js";
 import { invariant } from "../utilities/invariant.js";
 import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 
 export declare namespace Sandbox {
   export interface Props {
-    connection: HostConnection | null;
-    execution: HostConnection.ToolExecution | null;
+    connection: HostConnection;
+    execution: HostConnection.ToolExecution;
+    hostContext?: SandboxHostContext;
     url: string;
     onMessage?: (params: McpUiMessageRequest["params"]) => void;
     onOpenLink?: (params: McpUiOpenLinkRequest["params"]) => void;
   }
 }
 
+function mergeHostContext(
+  hostContext: SandboxHostContext | undefined,
+  tool: Tool,
+): McpUiHostContext {
+  return {
+    ...hostContext,
+    userAgent: navigator.userAgent,
+    toolInfo: {
+      tool,
+    },
+  };
+}
+
 export function Sandbox({
   url,
   connection,
   execution,
+  hostContext,
   onMessage,
   onOpenLink,
 }: Sandbox.Props) {
-  const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
-  const hasUiResource = !!(connection && execution && resourceUri);
+  const resourceUri = getToolUiResourceUri(execution.tool);
   const onMessageRef = useRef(onMessage);
   const onOpenLinkRef = useRef(onOpenLink);
+  const bridgeRef = useRef<AppBridge | null>(null);
+
+  // Keep track of hostContext in a ref so that we avoid tearing down/recreating
+  // the ref callback anytime we get a new hostContext object
+  const hostContextRef = useRef(hostContext);
 
   useLayoutEffect(() => {
     onMessageRef.current = onMessage;
     onOpenLinkRef.current = onOpenLink;
+    hostContextRef.current = hostContext;
   });
+
+  useEffect(() => {
+    bridgeRef.current?.setHostContext(
+      mergeHostContext(hostContext, execution.tool),
+    );
+  }, [hostContext, execution.tool]);
 
   const refCallback = useCallback(
     (iframe: HTMLIFrameElement) => {
-      if (!connection || !execution || !resourceUri) return;
-
       invariant(!connection.closed, "The connection is already closed.");
+      invariant(
+        resourceUri,
+        "`resourceUri` not set. This is a bug in @apollo/mcp-impostor-host. Please open an issue",
+      );
 
       let initialized = false;
       let mounted = true;
-      let bridge: AppBridge | undefined;
 
       function close() {
         mounted = false;
         if (initialized) {
-          bridge?.teardownResource({}).catch(() => {});
+          bridgeRef.current?.teardownResource({}).catch(() => {});
         }
 
-        bridge?.close();
+        bridgeRef.current?.close();
+        bridgeRef.current = null;
       }
 
       connection.addEventListener("close", close);
@@ -80,23 +111,24 @@ export function Sandbox({
 
           await waitForSandboxReady(iframe);
 
-          const capabilities = connection.client.getServerCapabilities();
-
-          bridge = new AppBridge(
+          const bridge = new AppBridge(
             connection.client,
-            { name: "@apollo/mcp-impostor-host", version: pkg.version },
+            { name: pkg.name, version: pkg.version },
             {
-              serverTools: capabilities?.tools,
-              serverResources: capabilities?.resources,
+              serverTools: {},
+              serverResources: {},
               message: {},
               openLinks: {},
             },
             {
-              hostContext: {
-                platform: "web",
-              },
+              hostContext: mergeHostContext(
+                hostContextRef.current,
+                execution.tool,
+              ),
             },
           );
+
+          bridgeRef.current = bridge;
 
           const init = promiseWithResolvers<void>();
 
@@ -145,7 +177,7 @@ export function Sandbox({
     [connection, execution, resourceUri, url],
   );
 
-  return hasUiResource ?
+  return resourceUri ?
       <iframe
         ref={refCallback}
         sandbox="allow-scripts allow-same-origin allow-forms"

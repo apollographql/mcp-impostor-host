@@ -126,6 +126,70 @@ registerAppResource(
   }),
 );
 
+registerAppTool(
+  server,
+  "host-context",
+  {
+    description: "Displays current host context values",
+    _meta: { ui: { resourceUri: "ui://mock/host-context.html" } },
+  },
+  async () => ({
+    content: [{ type: "text" as const, text: "Host context tool" }],
+  }),
+);
+
+registerAppResource(
+  server,
+  "Host Context View",
+  "ui://mock/host-context.html",
+  {},
+  async () => ({
+    contents: [
+      {
+        uri: "ui://mock/host-context.html",
+        mimeType: RESOURCE_MIME_TYPE,
+        text: `<!DOCTYPE html>
+<html>
+  <body>
+    <div id="theme">Loading...</div>
+    <div id="locale">Loading...</div>
+    <div id="timeZone">Loading...</div>
+    <script>
+      ${APP_INIT_SCRIPT}
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || !data.jsonrpc) return;
+
+        // Read host context from init response
+        if (data.id === 1 && data.result && data.result.hostContext) {
+          updateContext(data.result.hostContext);
+        }
+
+        // Listen for host context changes
+        if (data.method === "ui/notifications/host-context-changed") {
+          updateContext(data.params);
+        }
+      });
+
+      function updateContext(ctx) {
+        if (ctx.theme !== undefined) {
+          document.getElementById("theme").textContent = ctx.theme;
+        }
+        if (ctx.locale !== undefined) {
+          document.getElementById("locale").textContent = ctx.locale;
+        }
+        if (ctx.timeZone !== undefined) {
+          document.getElementById("timeZone").textContent = ctx.timeZone;
+        }
+      }
+    </script>
+  </body>
+</html>`,
+      },
+    ],
+  }),
+);
+
 const app = new Hono();
 
 app.use(

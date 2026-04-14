@@ -3,3 +3,5 @@ export { invariant } from "./invariant.js";
 export { promiseWithResolvers } from "./promiseWithResolvers.js";
 export { Logger } from "./logger.js";
 export { TypedEventTarget } from "./TypedEventTarget.js";
+
+export type { RemoveIndexSignature } from "./types/RemoveIndexSignature.js";

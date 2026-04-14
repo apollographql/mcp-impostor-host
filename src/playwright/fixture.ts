@@ -7,6 +7,7 @@ import { type FrameLocator, test as base } from "@playwright/test";
 
 import type { McpHost } from "./types.js";
 import type { Host } from "../core/index.js";
+import type { SandboxHostContext } from "../react/hooks/useHostContext.js";
 
 declare global {
   interface Window {
@@ -49,6 +50,7 @@ export interface McpHostConnection {
 }
 
 export interface McpHostFixture {
+  setHostContext(hostContext: Partial<SandboxHostContext>): Promise<void>;
   connect(options: Host.ConnectOptions): Promise<McpHostConnection>;
 }
 
@@ -99,6 +101,13 @@ export const test = base.extend<{ mcpHost: McpHostFixture }>({
     );
 
     const fixture: McpHostFixture = {
+      async setHostContext(hostContext) {
+        await page.evaluate(
+          (ctx) => window.__mcpHost.setHostContext(ctx),
+          hostContext,
+        );
+      },
+
       async connect(options) {
         await page.evaluate(
           (url) => window.__mcpHost.connect(url),

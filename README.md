@@ -142,6 +142,33 @@ test("opens documentation link", async ({ mcpHost }) => {
 
 All received open link requests are available on `connection.openLinkRequests`.
 
+### Configuring host context
+
+Use `mcpHost.setHostContext` to configure the [host context](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx#host-context-in-mcpuiinitializeresult) provided to the app. Call it before or after a tool call. The initial host context is sent to the app as a response to its `ui/initialize` notification. Updates to host context are sent to the app as `ui/notifications/host-context-changed` notifications.
+
+`setHostContext` shallow-merges the provided values into the current host context. By default, the `platform`, `theme`, `locale`, and `timeZone` are detected and set from the browser environment.
+
+```ts
+test("app responds to theme changes", async ({ mcpHost }) => {
+  // Set initial host context before connecting
+  await mcpHost.setHostContext({ theme: "dark" });
+
+  const connection = await mcpHost.connect({
+    url: "http://localhost:3000/mcp",
+  });
+
+  const { appFrame } = await connection.callTool("my-tool", {});
+
+  // Verify initial theme was received
+  await expect(appFrame.locator("#theme")).toHaveText("dark");
+
+  // Dynamically update — sends a host-context-changed notification to the app
+  await mcpHost.setHostContext({ theme: "light" });
+
+  await expect(appFrame.locator("#theme")).toHaveText("light");
+});
+```
+
 ### Timeouts
 
 Both `waitForMessageRequest` and `waitForOpenLinkRequest` default to a 5000ms timeout. Override it per-call:
@@ -152,9 +179,39 @@ const message = await connection.waitForMessageRequest({ timeout: 10000 });
 
 ## Custom setups
 
-For advanced use cases, the package also exports `Host` and `Sandbox` for building your own host setup:
+For advanced use cases, the package also exports `Host`, `Sandbox`, and `useHostContext` for building your own host setup:
 
 ```ts
 import { Host } from "@apollo/mcp-impostor-host";
-import { Sandbox } from "@apollo/mcp-impostor-host/react";
+import { Sandbox, useHostContext } from "@apollo/mcp-impostor-host/react";
 ```
+
+### `useHostContext`
+
+The `useHostContext` hook provides sensible browser defaults and a shallow-merge setter for host context. This hook is provided as a convenience for managing host context, but is not required for `<Sandbox />` to function properly.
+
+```tsx
+import { Sandbox, useHostContext } from "@apollo/mcp-impostor-host/react";
+
+function MyTestPage({ connection, execution }) {
+  const [hostContext, setHostContext] = useHostContext({ theme: "dark" });
+
+  return (
+    <>
+      <button onClick={() => setHostContext({ theme: "light" })}>
+        Switch to light mode
+      </button>
+      {connection && execution && (
+        <Sandbox
+          connection={connection}
+          execution={execution}
+          hostContext={hostContext}
+          url="http://localhost:8080/sandbox.html"
+        />
+      )}
+    </>
+  );
+}
+```
+
+By default, the `platform`, `theme`, `locale`, and `timeZone` are detected from the browser environment.
