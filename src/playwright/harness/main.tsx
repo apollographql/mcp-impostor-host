@@ -64,7 +64,7 @@ function Harness() {
     };
   }, [host, connection, setHostContext]);
 
-  return connection ?
+  return connection && execution ?
       <Sandbox
         connection={connection}
         execution={execution}

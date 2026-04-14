@@ -21,7 +21,7 @@ import { promiseWithResolvers } from "../utilities/promiseWithResolvers.js";
 export declare namespace Sandbox {
   export interface Props {
     connection: HostConnection;
-    execution: HostConnection.ToolExecution | null;
+    execution: HostConnection.ToolExecution;
     hostContext?: SandboxHostContext;
     url: string;
     onMessage?: (params: McpUiMessageRequest["params"]) => void;
@@ -51,8 +51,7 @@ export function Sandbox({
   onMessage,
   onOpenLink,
 }: Sandbox.Props) {
-  const resourceUri = execution ? getToolUiResourceUri(execution.tool) : null;
-  const hasUiResource = !!(execution && resourceUri);
+  const resourceUri = getToolUiResourceUri(execution.tool);
   const onMessageRef = useRef(onMessage);
   const onOpenLinkRef = useRef(onOpenLink);
   const bridgeRef = useRef<AppBridge | null>(null);
@@ -68,18 +67,20 @@ export function Sandbox({
   });
 
   useEffect(() => {
-    if (bridgeRef.current && execution?.tool) {
+    if (bridgeRef.current) {
       bridgeRef.current.setHostContext(
         mergeHostContext(hostContext, execution.tool),
       );
     }
-  }, [hostContext, execution?.tool]);
+  }, [hostContext, execution.tool]);
 
   const refCallback = useCallback(
     (iframe: HTMLIFrameElement) => {
-      if (!execution || !resourceUri) return;
-
       invariant(!connection.closed, "The connection is already closed.");
+      invariant(
+        resourceUri,
+        "`resourceUri` not set. This is a bug in @apollo/mcp-impostor-host. Please open an issue",
+      );
 
       let initialized = false;
       let mounted = true;
@@ -179,7 +180,7 @@ export function Sandbox({
     [connection, execution, resourceUri, url],
   );
 
-  return hasUiResource ?
+  return resourceUri ?
       <iframe
         ref={refCallback}
         sandbox="allow-scripts allow-same-origin allow-forms"
