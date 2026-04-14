@@ -10,7 +10,7 @@ Provide host context to the `hostContext` prop. The initial host context is sent
 
 ### `useHostContext` hook
 
-A new `useHostContext` hook is available from `@apollo/mcp-impostor-host/react`. It provides sensible browser defaults for `theme`, `locale`, and `timeZone`, and returns a shallow-merge setter for updates.
+A new `useHostContext` hook is available from `@apollo/mcp-impostor-host/react`. It provides sensible browser defaults for `platform`, `theme`, `locale`, and `timeZone`, and returns a shallow-merge setter for updates.
 
 ```jsx
 import { Sandbox, useHostContext } from "@apollo/mcp-impostor-host/react";

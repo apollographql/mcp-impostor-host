@@ -10,7 +10,7 @@ import type { RemoveIndexSignature } from "../../utilities/index.js";
  */
 export type SandboxHostContext = Omit<
   RemoveIndexSignature<McpUiHostContext>,
-  "platform" | "userAgent" | "toolInfo"
+  "userAgent" | "toolInfo"
 > & { [key: string]: unknown };
 
 function getDefaults(): SandboxHostContext {
@@ -21,6 +21,7 @@ function getDefaults(): SandboxHostContext {
       : "light",
     locale: navigator.language,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    platform: "web",
   };
 }
 

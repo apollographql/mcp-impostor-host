@@ -146,7 +146,7 @@ All received open link requests are available on `connection.openLinkRequests`.
 
 Use `mcpHost.setHostContext` to configure the [host context](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx#host-context-in-mcpuiinitializeresult) provided to the app. Call it before or after a tool call. The initial host context is sent to the app as a response to its `ui/initialize` notification. Updates to host context are sent to the app as `ui/notifications/host-context-changed` notifications.
 
-`setHostContext` shallow-merges the provided values into the current host context. By default, the `theme`, `locale`, and `timeZone` are detected and set from the from the browser environment.
+`setHostContext` shallow-merges the provided values into the current host context. By default, the `platform`, `theme`, `locale`, and `timeZone` are detected and set from the browser environment.
 
 ```ts
 test("app responds to theme changes", async ({ mcpHost }) => {
@@ -214,4 +214,4 @@ function MyTestPage({ connection, execution }) {
 }
 ```
 
-By default, the `theme`, `locale`, and `timeZone` are detected from the browser environment.
+By default, the `platform`, `theme`, `locale`, and `timeZone` are detected from the browser environment.
