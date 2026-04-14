@@ -29,11 +29,6 @@ function getDefaults(): SandboxHostContext {
  * Convenience hook that provides a host context value with sensible browser
  * defaults and a shallow-merge setter.
  *
- * Defaults detected from the browser:
- * - `theme` — from `prefers-color-scheme` media query
- * - `locale` — from `navigator.language`
- * - `timeZone` — from `Intl.DateTimeFormat`
- *
  * @param hostContext - Optional partial context merged on top of defaults
  * @returns A `[hostContext, setHostContext]` tuple where `setHostContext`
  *   shallow-merges the provided values into the current state.
@@ -45,6 +40,12 @@ function getDefaults(): SandboxHostContext {
  * // Later — shallow-merges, only updates theme
  * setHostContext({ theme: "light" });
  * ```
+ *
+ * @defaultValue
+ * - `theme` - `prefers-color-scheme` media query
+ * - `locale` - `navigator.language`
+ * - `timeZone` - `Intl.DateTimeFormat`
+ * - `platform` - "web"
  */
 export function useHostContext(
   hostContext?: Partial<SandboxHostContext>,
