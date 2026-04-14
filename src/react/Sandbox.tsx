@@ -34,9 +34,9 @@ function mergeHostContext(
   tool: Tool,
 ): McpUiHostContext {
   return {
-    ...hostContext,
     platform: "web",
-    userAgent: pkg.name,
+    ...hostContext,
+    userAgent: navigator.userAgent,
     toolInfo: {
       tool,
     },
