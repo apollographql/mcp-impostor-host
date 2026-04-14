@@ -66,11 +66,9 @@ export function Sandbox({
   });
 
   useEffect(() => {
-    if (bridgeRef.current) {
-      bridgeRef.current.setHostContext(
-        mergeHostContext(hostContext, execution.tool),
-      );
-    }
+    bridgeRef.current?.setHostContext(
+      mergeHostContext(hostContext, execution.tool),
+    );
   }, [hostContext, execution.tool]);
 
   const refCallback = useCallback(
