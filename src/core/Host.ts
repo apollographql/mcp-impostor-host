@@ -1,4 +1,4 @@
-import { UI_EXTENSION_CAPABILITIES } from "@mcp-ui/client";
+import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps";
 import { Client } from "@modelcontextprotocol/sdk/client";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp";
 import type { Resource, Tool } from "@modelcontextprotocol/sdk/types";
@@ -17,6 +17,12 @@ export declare namespace Host {
     url: string;
   }
 }
+
+const UI_EXTENSION_CAPABILITIES = {
+  "io.modelcontextprotocol/ui": {
+    mimeTypes: [RESOURCE_MIME_TYPE],
+  },
+} as const;
 
 export class Host {
   #client: Client;
