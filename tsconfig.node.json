@@ -4,5 +4,9 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["./src/sandbox/server.ts", "./e2e/mock-server.ts"]
+  "include": [
+    "./src/sandbox/server.ts",
+    "./e2e/mock-server.ts",
+    "./playwright.config.ts"
+  ]
 }
